@@ -103,6 +103,8 @@ resource "aws_route_table" "private" {
   }
 }
 
+// Creando instancias
+
 resource "aws_instance" "nginx_1" {
   ami           = "ami-12345678"
   instance_type = "t2.micro"
@@ -143,41 +145,7 @@ resource "aws_instance" "gancio" {
   }
 }
 
-resource "aws_db_instance" "rds_mysql" {
-  allocated_storage    = 20
-  engine              = "mysql"
-  engine_version      = "8.0"
-  instance_class      = "db.t3.micro"
-  identifier          = "tfg-rds-mysql"
-  username           = "admin"
-  password           = "securepassword"
-  skip_final_snapshot = true
-  vpc_security_group_ids = [aws_security_group.rds_sg.id]
-  db_subnet_group_name = aws_db_subnet_group.rds_subnet_group.name
-
-  tags = {
-    Name = "RDS MySQL"
-  }
-}
-
-resource "aws_db_subnet_group" "rds_subnet_group" {
-  name       = "rds-subnet-group"
-  subnet_ids = [aws_subnet.private_3.id, aws_subnet.private_4.id]
-}
-
-resource "aws_security_group" "rds_sg" {
-  vpc_id = aws_vpc.tfg_asir_vpc.id
-  
-  ingress {
-    from_port   = 3306
-    to_port     = 3306
-    protocol    = "tcp"
-    cidr_blocks = ["10.208.0.0/16"]
-  }
-}
-
-// Creación del RDS de Lemmy
-
+// RDS MySQL de Lemmy
 resource "aws_db_instance" "rds_mysql_lemmy" {
   allocated_storage    = 20
   engine              = "mysql"
@@ -189,6 +157,7 @@ resource "aws_db_instance" "rds_mysql_lemmy" {
   skip_final_snapshot = true
   vpc_security_group_ids = [aws_security_group.rds_sg_lemmy.id]
   db_subnet_group_name = aws_db_subnet_group.lemmy_rds_subnet_group.name
+  multi_az            = false  # No usar Alta Disponibilidad para forzar 1 sola subred
 
   tags = {
     Name = "RDS MySQL Lemmy"
@@ -197,7 +166,7 @@ resource "aws_db_instance" "rds_mysql_lemmy" {
 
 resource "aws_db_subnet_group" "lemmy_rds_subnet_group" {
   name       = "lemmy-rds-subnet-group"
-  subnet_ids = [aws_subnet.private_3.id, aws_subnet.private_4.id]
+  subnet_ids = [aws_subnet.private_3.id]  # Solo en la subred privada 3
 }
 
 resource "aws_security_group" "rds_sg_lemmy" {
@@ -207,13 +176,41 @@ resource "aws_security_group" "rds_sg_lemmy" {
     from_port   = 3306
     to_port     = 3306
     protocol    = "tcp"
-    cidr_blocks = ["10.208.0.0/16"]
+    cidr_blocks = ["10.208.0.0/16"]  # Permitir conexiones dentro de la VPC
   }
+}
+
+// RDS MySQL de Gancio
+resource "aws_db_instance" "rds_mysql_gancio" {
+  allocated_storage    = 20
+  engine              = "mysql"
+  engine_version      = "8.0"
+  instance_class      = "db.t3.micro"
+  identifier          = "gancio-rds-mysql"
+  username           = "carlosfc"
+  password           = "1234567890asd."
+  skip_final_snapshot = true
+  vpc_security_group_ids = [aws_security_group.rds_sg_gancio.id]
+  db_subnet_group_name = aws_db_subnet_group.gancio_rds_subnet_group.name
+  multi_az            = false  # No usar Alta Disponibilidad para forzar 1 sola subred
+
+  tags = {
+    Name = "RDS MySQL Gancio"
+  }
+}
+
+resource "aws_db_subnet_group" "gancio_rds_subnet_group" {
+  name       = "gancio-rds-subnet-group"
+  subnet_ids = [aws_subnet.private_4.id]  # Solo en la subred privada 4
+}
+
+resource "aws_security_group" "rds_sg_gancio" {
+  vpc_id = aws_vpc.tfg_asir_vpc.id
   
-  egress {
-    from_port   = 0
-    to_port     = 0
-    protocol    = "-1"
-    cidr_blocks = ["0.0.0.0/0"]
+  ingress {
+    from_port   = 3306
+    to_port     = 3306
+    protocol    = "tcp"
+    cidr_blocks = ["10.208.0.0/16"]  # Permitir conexiones dentro de la VPC
   }
 }
