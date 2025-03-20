@@ -103,12 +103,34 @@ resource "aws_route_table" "private" {
   }
 }
 
+
+// Genera una clave privada RSA de 4096 bits
+resource "tls_private_key" "ssh_key" {
+  algorithm = "RSA"
+  rsa_bits  = 4096
+}
+
+// Guarda la clave privada en formato .pem
+resource "local_file" "private_key" {
+  filename        = "${path.module}/tfg-key.pem"
+  content         = tls_private_key.ssh_key.private_key_pem
+  file_permission = "0600"
+}
+
+// Crea la clave SSH en AWS para EC2
+resource "aws_key_pair" "ssh_key" {
+  key_name   = "tfg-key"
+  public_key = tls_private_key.ssh_key.public_key_openssh
+}
+
+
 // Creación de la instancia de Nginx - 1
 
 resource "aws_instance" "nginx_1" {
   ami           = "ami-12345678"
   instance_type = "t2.micro"
   subnet_id     = aws_subnet.public_1.id
+  key_name      = aws_key_pair.ssh_key.key_name
 
   tags = {
     Name = "NGINX-1"
@@ -121,6 +143,7 @@ resource "aws_instance" "nginx_2" {
   ami           = "ami-12345678"
   instance_type = "t2.micro"
   subnet_id     = aws_subnet.public_2.id
+  key_name      = aws_key_pair.ssh_key.key_name
 
   tags = {
     Name = "NGINX-2"
@@ -133,6 +156,7 @@ resource "aws_instance" "lemmy" {
   ami           = "ami-12345678"
   instance_type = "t2.micro"
   subnet_id     = aws_subnet.private_3.id
+  key_name      = aws_key_pair.ssh_key.key_name
 
   tags = {
     Name = "LEMMY-1"
@@ -145,6 +169,7 @@ resource "aws_instance" "gancio" {
   ami           = "ami-12345678"
   instance_type = "t2.micro"
   subnet_id     = aws_subnet.private_4.id
+  key_name      = aws_key_pair.ssh_key.key_name
 
   tags = {
     Name = "GANCIO-1"
@@ -166,7 +191,7 @@ resource "aws_db_instance" "rds_mysql_lemmy" {
   multi_az            = false  # No usar Alta Disponibilidad para forzar 1 sola subred
 
   tags = {
-    Name = "RDS MySQL Lemmy"
+    Name = "RDS-LEMMY"
   }
 }
 
@@ -201,7 +226,7 @@ resource "aws_db_instance" "rds_mysql_gancio" {
   multi_az            = false  # No usar Alta Disponibilidad para forzar 1 sola subred
 
   tags = {
-    Name = "RDS MySQL Gancio"
+    Name = "RDS-GANCIO"
   }
 }
 
@@ -228,125 +253,3 @@ resource "aws_security_group" "rds_sg_gancio" {
 
 
 
-// Instancia para hacer backups
-resource "aws_instance" "backup_server" {
-  ami                    = "ami-12345678" 
-  instance_type          = "t2.micro"  
-  subnet_id              = aws_subnet.private_3.id
-  vpc_security_group_ids = [aws_security_group.backup_sg.id]
-  key_name               = "mi-clave-aws" # Sustituye por tu par de claves
-  root_block_device {
-    volume_size = 20
-  }
-
-  tags = {
-    Name = "Servidor de Backups"
-  }
-}
-
-// Grupo de seguridad para instancias de Backups
-resource "aws_security_group" "backup_sg" {
-  vpc_id = aws_vpc.tfg_asir_vpc.id
-
-  ingress {
-    from_port   = 22
-    to_port     = 22
-    protocol    = "tcp"
-    cidr_blocks = ["10.208.0.0/16"]  # Solo accesible dentro de la VPC
-  }
-
-  ingress {
-    from_port   = 3306
-    to_port     = 3306
-    protocol    = "tcp"
-    cidr_blocks = ["10.208.0.0/16"]  # Acceso solo a MySQL dentro de la VPC
-  }
-
-  egress {
-    from_port   = 0
-    to_port     = 0
-    protocol    = "-1"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
-}
-
-// Volúmenes EBS para RAID 1 (50GB x 2)
-resource "aws_ebs_volume" "backup_raid_1" {
-  availability_zone = aws_instance.backup_server.availability_zone
-  size             = 50
-  type             = "gp3"
-
-  tags = {
-    Name = "RAID1-1"
-  }
-}
-
-resource "aws_ebs_volume" "backup_raid_2" {
-  availability_zone = aws_instance.backup_server.availability_zone
-  size             = 50
-  type             = "gp3"
-
-  tags = {
-    Name = "RAID1-2"
-  }
-}
-
-// Volumen adicional de 50GB para almacenamiento
-resource "aws_ebs_volume" "backup_secondary" {
-  availability_zone = aws_instance.backup_server.availability_zone
-  size             = 50
-  type             = "gp3"
-
-  tags = {
-    Name = "Backup-Extra"
-  }
-}
-
-// Adjuntar volúmenes RAID 1 a la instancia
-resource "aws_volume_attachment" "attach_raid_1" {
-  device_name = "/dev/xvdf"
-  instance_id = aws_instance.backup_server.id
-  volume_id   = aws_ebs_volume.backup_raid_1.id
-}
-
-resource "aws_volume_attachment" "attach_raid_2" {
-  device_name = "/dev/xvdg"
-  instance_id = aws_instance.backup_server.id
-  volume_id   = aws_ebs_volume.backup_raid_2.id
-}
-
-// Adjuntar volumen secundario de 50GB
-resource "aws_volume_attachment" "attach_secondary" {
-  device_name = "/dev/xvdh"
-  instance_id = aws_instance.backup_server.id
-  volume_id   = aws_ebs_volume.backup_secondary.id
-}
-
-// Creación del bucket S3
-resource "aws_s3_bucket" "backup_bucket" {
-  bucket = "tfg-backups-mysql"
-
-  tags = {
-    Name        = "MySQL Backups"
-    Environment = "Production"
-  }
-}
-
-// Configurando Glacier
-resource "aws_s3_bucket_lifecycle_configuration" "backup_lifecycle" {
-  bucket = aws_s3_bucket.backup_bucket.id
-
-  rule {
-    id     = "MoveToGlacier"
-    status = "Enabled"
-
-    transition {
-      days          = 30
-      storage_class = "GLACIER"
-    }
-
-    expiration {
-      days = 365  # Borrar backups después de un año
-    }
-  }
-}
