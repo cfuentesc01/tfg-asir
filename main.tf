@@ -3,7 +3,9 @@ provider "aws" {
   region = "us-east-1"
 }
 
-// Creación de la VPC
+#####################################
+########### CREACIÓN VPC ############
+#####################################
 
 resource "aws_vpc" "tfg_asir_vpc" {
   cidr_block = "10.208.0.0/16"
@@ -103,6 +105,9 @@ resource "aws_route_table" "private" {
   }
 }
 
+#####################################
+######## CREACIÓN CLAVES SSH ########
+#####################################
 
 // Genera una clave privada RSA de 4096 bits
 resource "tls_private_key" "ssh_key" {
@@ -124,10 +129,15 @@ resource "aws_key_pair" "ssh_key" {
 }
 
 
+#####################################
+################ EC2 ################
+#####################################
+
+
 // Creación de la instancia de Nginx - 1
 
 resource "aws_instance" "nginx_1" {
-  ami           = "ami-12345678"
+  ami           = "ami-04b4f1a9cf54c11d0"
   instance_type = "t2.micro"
   subnet_id     = aws_subnet.public_1.id
   key_name      = aws_key_pair.ssh_key.key_name
@@ -140,7 +150,7 @@ resource "aws_instance" "nginx_1" {
 // Creación de la instancia de Nginx - 2
 
 resource "aws_instance" "nginx_2" {
-  ami           = "ami-12345678"
+  ami           = "ami-04b4f1a9cf54c11d0"
   instance_type = "t2.micro"
   subnet_id     = aws_subnet.public_2.id
   key_name      = aws_key_pair.ssh_key.key_name
@@ -153,10 +163,11 @@ resource "aws_instance" "nginx_2" {
 // Creación de la instancia de Lemmy
 
 resource "aws_instance" "lemmy" {
-  ami           = "ami-12345678"
+  ami           = "ami-04b4f1a9cf54c11d0"
   instance_type = "t2.micro"
   subnet_id     = aws_subnet.private_3.id
   key_name      = aws_key_pair.ssh_key.key_name
+  user_data     = file("${path.module}/scripts/docker.sh")
 
   tags = {
     Name = "LEMMY-1"
@@ -166,7 +177,7 @@ resource "aws_instance" "lemmy" {
 // Creación de la instancia de Gancio
 
 resource "aws_instance" "gancio" {
-  ami           = "ami-12345678"
+  ami           = "ami-04b4f1a9cf54c11d0"
   instance_type = "t2.micro"
   subnet_id     = aws_subnet.private_4.id
   key_name      = aws_key_pair.ssh_key.key_name
@@ -175,6 +186,10 @@ resource "aws_instance" "gancio" {
     Name = "GANCIO-1"
   }
 }
+
+#####################################
+######## CREACIÓN RDS MYSQL #########
+#####################################
 
 // RDS MySQL de Lemmy
 resource "aws_db_instance" "rds_mysql_lemmy" {
@@ -245,11 +260,3 @@ resource "aws_security_group" "rds_sg_gancio" {
     cidr_blocks = ["10.208.0.0/16"]  # Permitir conexiones dentro de la VPC
   }
 }
-
-
-
-
-
-
-
-
