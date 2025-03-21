@@ -191,13 +191,13 @@ resource "aws_instance" "gancio" {
 ######## CREACIÓN RDS MYSQL #########
 #####################################
 
-// RDS MySQL de Lemmy
-resource "aws_db_instance" "rds_mysql_lemmy" {
+// RDS PostgreSQL de Lemmy
+resource "aws_db_instance" "rds_postgres_lemmy" {
   allocated_storage    = 20
-  engine              = "mysql"
-  engine_version      = "8.0"
+  engine              = "postgres"
+  engine_version      = "15"
   instance_class      = "db.t3.micro"
-  identifier          = "lemmy-rds-mysql"
+  identifier          = "lemmy-rds-postgres"
   username           = "carlosfc"
   password           = "1234567890asd."
   skip_final_snapshot = true
@@ -219,12 +219,13 @@ resource "aws_security_group" "rds_sg_lemmy" {
   vpc_id = aws_vpc.tfg_asir_vpc.id
   
   ingress {
-    from_port   = 3306
-    to_port     = 3306
+    from_port   = 5432
+    to_port     = 5432
     protocol    = "tcp"
     cidr_blocks = ["10.208.0.0/16"]  # Permitir conexiones dentro de la VPC
   }
 }
+
 
 // RDS MySQL de Gancio
 resource "aws_db_instance" "rds_mysql_gancio" {
