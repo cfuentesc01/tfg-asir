@@ -167,10 +167,39 @@ resource "aws_instance" "lemmy" {
   instance_type = "t2.micro"
   subnet_id     = aws_subnet.private_3.id
   key_name      = aws_key_pair.ssh_key.key_name
-  user_data     = file("${path.module}/scripts/docker.sh")
 
   tags = {
     Name = "LEMMY-1"
+  }
+}
+
+// Creación de la instancia de Backups con OpenMediaVault
+
+resource "aws_instance" "backups" {
+  ami           = "ami-04b4f1a9cf54c11d0"
+  instance_type = "t3.small"
+  subnet_id     = aws_subnet.private_3.id
+  key_name      = aws_key_pair.ssh_key.key_name
+
+  tags = {
+    Name = "BACKUPS"
+  }
+
+  root_block_device {
+    volume_size = 20  # Disco raíz
+    volume_type = "gp3"
+  }
+
+  ebs_block_device {
+    device_name = "/dev/xvdf"  # Primer disco (RAID 1)
+    volume_size = 30
+    volume_type = "gp3"
+  }
+
+  ebs_block_device {
+    device_name = "/dev/xvdg"  # Segundo disco (RAID 1)
+    volume_size = 30
+    volume_type = "gp3"
   }
 }
 
