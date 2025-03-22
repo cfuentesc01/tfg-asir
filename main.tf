@@ -63,7 +63,7 @@ resource "aws_subnet" "private_3" {
 resource "aws_subnet" "private_4" {
   vpc_id            = aws_vpc.tfg_asir_vpc.id
   cidr_block        = "10.208.4.0/24"
-  availability_zone = "us-east-1b"
+  availability_zone = "us-east-1c"
 
   tags = {
     Name = "tfg-asir-subnet-private4"
@@ -253,7 +253,11 @@ resource "aws_db_instance" "rds_postgres_lemmy" {
 
 resource "aws_db_subnet_group" "lemmy_rds_subnet_group" {
   name       = "lemmy-rds-subnet-group"
-  subnet_ids = [aws_subnet.private_3.id]  # Solo en la subred privada 3
+  subnet_ids = [aws_subnet.private_3.id, aws_subnet.private_4.id] # Asegura 2 AZs
+
+  tags = {
+    Name = "Lemmy RDS Subnet Group"
+  }
 }
 
 resource "aws_security_group" "rds_sg_lemmy" {
@@ -289,7 +293,11 @@ resource "aws_db_instance" "rds_mysql_gancio" {
 
 resource "aws_db_subnet_group" "gancio_rds_subnet_group" {
   name       = "gancio-rds-subnet-group"
-  subnet_ids = [aws_subnet.private_4.id]  # Solo en la subred privada 4
+  subnet_ids = [aws_subnet.private_3.id, aws_subnet.private_4.id] # Asegura 2 AZs
+
+  tags = {
+    Name = "Gancio RDS Subnet Group"
+  }
 }
 
 resource "aws_security_group" "rds_sg_gancio" {
