@@ -228,6 +228,20 @@ resource "aws_instance" "gancio" {
   }
 }
 
+// Creación de la instancia de Prometheus con Grafana
+
+resource "aws_instance" "gancio" {
+  ami           = "ami-04b4f1a9cf54c11d0"
+  instance_type = "t2.micro"
+  subnet_id     = aws_subnet.private_4.id
+  key_name      = aws_key_pair.ssh_key.key_name
+
+  tags = {
+    Name = "PROMETHEUS"
+  }
+}
+
+
 #####################################
 ############ CREACIÓN RDS ###########
 #####################################
