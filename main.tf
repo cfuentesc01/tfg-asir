@@ -140,6 +140,342 @@ resource "aws_key_pair" "ssh_key" {
   public_key = tls_private_key.ssh_key.public_key_openssh
 }
 
+#####################################
+########## SECURITY GROUPS ##########
+#####################################
+
+// Creación del grupo de seguridad de Nginx - 1
+
+resource "aws_security_group" "nginx-1_sg" {
+  name        = "nginx-security-group"
+  description = "Permitir tráfico HTTP, HTTPS y SSH"
+  vpc_id      = aws_vpc.tfg_asir_vpc.id
+
+  # Permitir SSH solo desde tu IP (reemplaza con tu IP pública)
+  ingress {
+    from_port   = 22
+    to_port     = 22
+    protocol    = "tcp"
+    cidr_blocks = ["10.208.0.0/16"]
+  }
+
+  # Permitir tráfico HTTP desde cualquier lugar
+  ingress {
+    from_port   = 80
+    to_port     = 80
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  # Permitir tráfico HTTPS desde cualquier lugar
+  ingress {
+    from_port   = 443
+    to_port     = 443
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  # Permitir salida a cualquier destino
+  egress {
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  tags = {
+    Name = "SG-NGINX-1"
+  }
+}
+
+// Creación del grupo de seguridad de Nginx - 2
+
+resource "aws_security_group" "nginx-2_sg" {
+  name        = "nginx-security-group"
+  description = "Permitir tráfico HTTP, HTTPS y SSH"
+  vpc_id      = aws_vpc.tfg_asir_vpc.id
+
+  # Permitir SSH solo desde tu IP (reemplaza con tu IP pública)
+  ingress {
+    from_port   = 22
+    to_port     = 22
+    protocol    = "tcp"
+    cidr_blocks = ["10.208.0.0/16"]
+  }
+
+  # Permitir tráfico HTTP desde cualquier lugar
+  ingress {
+    from_port   = 80
+    to_port     = 80
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  # Permitir tráfico HTTPS desde cualquier lugar
+  ingress {
+    from_port   = 443
+    to_port     = 443
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  # Permitir salida a cualquier destino
+  egress {
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  tags = {
+    Name = "SG-NGINX-2"
+  }
+}
+
+// Creación del grupo de seguridad de Lemmy
+
+resource "aws_security_group" "lemmy_sg" {
+  name        = "lemmy-security-group"
+  description = "Reglas de seguridad para la instancia de Lemmy"
+  vpc_id      = aws_vpc.tfg_asir_vpc  # Asegúrate de que esta variable coincide con tu VPC
+
+  # Permitir SSH solo desde una IP específica o bastión
+  ingress {
+    from_port   = 22
+    to_port     = 22
+    protocol    = "tcp"
+    cidr_blocks = ["10.208.0.0/16"] 
+  }
+
+  # Permitir acceso a Lemmy desde las instancias NGINX
+  ingress {
+    from_port   = 8536
+    to_port     = 8536
+    protocol    = "tcp"
+    security_groups = [aws_security_group.nginx-1_sg.id]  # Asegúrate de que el SG de NGINX está definido
+  }
+
+  # Permitir acceso a PostgreSQL solo dentro de la subred privada
+  ingress {
+    from_port   = 5432
+    to_port     = 5432
+    protocol    = "tcp"
+    cidr_blocks = ["10.208.3.0/24"]  # Ajusta a la subred privada correcta
+  }
+
+  # Permitir que Prometheus acceda a Gancio para monitorización (puerto 9100)
+  ingress {
+    from_port   = 9100
+    to_port     = 9100
+    protocol    = "tcp"
+    cidr_blocks = ["10.208.0.0/16"]  # Toda la VPC puede monitorizar
+  }
+
+  # Salida permitida a cualquier destino (Internet vía NAT Gateway)
+  egress {
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  tags = {
+    Name = "Lemmy Security Group"
+  }
+}
+
+// Creación del grupo de seguridad de Gancio con el PostFix
+
+resource "aws_security_group" "gancio_sg" {
+  name        = "gancio-security-group"
+  description = "Reglas de seguridad para la instancia de Gancio con Postfix y RDS"
+  vpc_id      = aws_vpc.tfg_asir_vpc.id  # Asegura que esté en la VPC correcta
+
+  # Permitir acceso SSH desde cualquier instancia dentro de la VPC
+  ingress {
+    from_port   = 22
+    to_port     = 22
+    protocol    = "tcp"
+    cidr_blocks = ["10.208.0.0/16"]  # Toda la VPC puede acceder por SSH
+  }
+
+  # Permitir acceso a la interfaz web de Gancio (puerto 8000) desde la VPC
+  ingress {
+    from_port   = 8000
+    to_port     = 8000
+    protocol    = "tcp"
+    cidr_blocks = ["10.208.0.0/16"]  # Toda la VPC puede acceder a Gancio
+  }
+
+  # Permitir tráfico SMTP (Postfix - envío de correos)
+  ingress {
+    from_port   = 25
+    to_port     = 25
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]  # Global para enviar correos SMTP
+  }
+
+  # Permitir SMTPS (SMTP seguro) y Submission (STARTTLS)
+  ingress {
+    from_port   = 465
+    to_port     = 465
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]  # Global para SMTPS
+  }
+
+  ingress {
+    from_port   = 587
+    to_port     = 587
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]  # Global para Submission (STARTTLS)
+  }
+
+  # Permitir acceso a MySQL RDS desde Gancio
+  ingress {
+    from_port   = 3306
+    to_port     = 3306
+    protocol    = "tcp"
+    cidr_blocks = ["10.208.0.0/16"]  # Acceso desde cualquier instancia en la VPC
+  }
+
+  # Permitir que Prometheus acceda a Gancio para monitorización (puerto 9100)
+  ingress {
+    from_port   = 9100
+    to_port     = 9100
+    protocol    = "tcp"
+    cidr_blocks = ["10.208.0.0/16"]  # Toda la VPC puede monitorizar
+  }
+
+  # Permitir consultas DNS salientes (necesario para Postfix)
+  egress {
+    from_port   = 53
+    to_port     = 53
+    protocol    = "udp"
+    cidr_blocks = ["0.0.0.0/0"]  # Salida global para consultas DNS
+  }
+
+  # Permitir salida a Internet 
+  egress {
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  tags = {
+    Name = "Gancio Security Group"
+  }
+}
+
+
+// Creación del grupo de seguridad de Prometheus
+
+resource "aws_security_group" "prometheus_sg" {
+  name        = "prometheus-security-group"
+  description = "Reglas de seguridad para la instancia de Prometheus con Grafana"
+  vpc_id      = aws_vpc.tfg_asir_vpc.id 
+
+  # Permitir acceso SSH desde cualquier instancia dentro de la VPC
+  ingress {
+    from_port   = 22
+    to_port     = 22
+    protocol    = "tcp"
+    cidr_blocks = ["10.208.0.0/16"]  # Toda la VPC puede acceder por SSH
+  }
+
+  # Permitir acceso a la interfaz web de Prometheus (9090) desde cualquier instancia de la VPC
+  ingress {
+    from_port   = 9090
+    to_port     = 9090
+    protocol    = "tcp"
+    cidr_blocks = ["10.208.0.0/16"]  # Toda la VPC puede acceder a Prometheus
+  }
+
+  # Permitir recepción de métricas desde cualquier instancia de la VPC
+  ingress {
+    from_port   = 9090
+    to_port     = 9090
+    protocol    = "tcp"
+    cidr_blocks = ["10.208.0.0/16"]  # Toda la VPC puede enviar métricas
+  }
+
+  # Permitir acceso a la interfaz web de Grafana (3000) desde cualquier instancia de la VPC
+  ingress {
+    from_port   = 3000
+    to_port     = 3000
+    protocol    = "tcp"
+    cidr_blocks = ["10.208.0.0/16"]  # Toda la VPC puede acceder a Grafana
+  }
+
+  # Permitir salida a Internet (para actualizaciones, etc.)
+  egress {
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  tags = {
+    Name = "SG-PROMETHEUS"
+  }
+}
+
+// Creación del grupo de seguridad de Backups con OpenMediaVault
+
+resource "aws_security_group" "backups_sg" {
+  name        = "backups_sg"
+  description = "Permitir acceso a OpenMediaVault y conexiones a RDS"
+  vpc_id      = aws_vpc.tfg_asir_vpc.id
+
+  # Permitir SSH desde cualquier instancia dentro de la VPC
+  ingress {
+    from_port   = 22
+    to_port     = 22
+    protocol    = "tcp"
+    cidr_blocks = ["10.208.0.0/16"]
+    description = "SSH desde la VPC"
+  }
+
+  # Permitir acceso HTTPS a la interfaz web de OpenMediaVault
+  ingress {
+    from_port   = 443
+    to_port     = 443
+    protocol    = "tcp"
+    cidr_blocks = ["10.208.0.0/16"]
+    description = "Interfaz Web OpenMediaVault desde la VPC"
+  }
+
+  # Permitir conexión a MySQL RDS
+  ingress {
+    from_port   = 3306
+    to_port     = 3306
+    protocol    = "tcp"
+    cidr_blocks = ["10.208.0.0/16"]
+    description = "Acceso a MySQL RDS desde Backups"
+  }
+
+  # Permitir conexión a PostgreSQL RDS
+  ingress {
+    from_port   = 5432
+    to_port     = 5432
+    protocol    = "tcp"
+    cidr_blocks = ["10.208.0.0/16"]
+    description = "Acceso a PostgreSQL RDS desde Backups"
+  }
+
+  # Reglas de salida: permitir tráfico saliente a cualquier destino
+  egress {
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+    description = "Permitir todo el tráfico saliente"
+  }
+
+  tags = {
+    Name = "Backups SG"
+  }
+}
 
 #####################################
 ################ EC2 ################
@@ -153,6 +489,7 @@ resource "aws_instance" "nginx_1" {
   instance_type = "t2.micro"
   subnet_id     = aws_subnet.public_1.id
   key_name      = aws_key_pair.ssh_key.key_name
+  security_groups = [aws_security_group.nginx-1_sg.name]
 
   tags = {
     Name = "NGINX-1"
