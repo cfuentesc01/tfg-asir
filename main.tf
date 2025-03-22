@@ -188,7 +188,7 @@ resource "aws_instance" "gancio" {
 }
 
 #####################################
-######## CREACIÓN RDS MYSQL #########
+############ CREACIÓN RDS ###########
 #####################################
 
 // RDS PostgreSQL de Lemmy

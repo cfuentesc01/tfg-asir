@@ -9,9 +9,9 @@ Ambos servicios se desplegarán en un entorno seguro y escalable, con la integra
 - Implementar **Lemmy** y **Gancio** en AWS utilizando **Docker Compose** y **instalación nativa**.
 - Configurar bases de datos **MySQL en RDS** para ambas aplicaciones.
 - Desplegar **Nginx** como proxy inverso para gestionar el tráfico y los certificados SSL.
-- Automatizar la instalación mediante Terraform.
-- Implementar un servicio de notificaciones por correo con un servidor de correo self-hosted con PostFix.
-- Incorporar un sistema de monitorización con Zabbix
+- Automatizar la instalación mediante **Terraform**.
+- Implementar un servicio de notificaciones por correo con un servidor de correo self-hosted con **PostFix**.
+- Incorporar un sistema de monitorización con **Prometheus con Grafana**
 - Implementar medidas de seguridad como firewall, reglas de seguridad estrictas.
 - Realizar copias de seguridad automáticas de las bases de datos en otra instancia.
 
@@ -26,7 +26,7 @@ Ambos servicios se desplegarán en un entorno seguro y escalable, con la integra
 - **Docker & Docker Compose** (para Lemmy)
 - **MySQL en AWS RDS** (almacenamiento de datos)
 - **Terraform** (automatización)
-- **Zabbix** (monitorización y visualización de recursos)
+- **Prometheus con Grafana** (monitorización y visualización de recursos)
 - **Postfix SMTP** (notificaciones de eventos por email)
 - **Firewall y reglas IAM estrictas** (seguridad)
 
