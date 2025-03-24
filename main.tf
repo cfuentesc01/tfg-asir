@@ -483,7 +483,7 @@ resource "aws_instance" "nginx_1" {
   instance_type = "t2.micro"
   subnet_id     = aws_subnet.public_1.id
   key_name      = aws_key_pair.ssh_key.key_name
-  security_groups = [aws_security_group.nginx-1_sg.name]
+  security_groups = [aws_security_group.nginx-1_sg.id]
 
   tags = {
     Name = "NGINX-1"
@@ -497,7 +497,7 @@ resource "aws_instance" "nginx_2" {
   instance_type = "t2.micro"
   subnet_id     = aws_subnet.public_2.id
   key_name      = aws_key_pair.ssh_key.key_name
-
+  security_groups = [aws_security_group.nginx-2_sg.id]
   tags = {
     Name = "NGINX-2"
   }
@@ -510,6 +510,7 @@ resource "aws_instance" "lemmy" {
   instance_type = "t2.micro"
   subnet_id     = aws_subnet.private_3.id
   key_name      = aws_key_pair.ssh_key.key_name
+  security_groups = [aws_security_group.lemmy_sg.id]
 
   tags = {
     Name = "LEMMY-1"
@@ -523,6 +524,7 @@ resource "aws_instance" "backups" {
   instance_type = "t3.small"
   subnet_id     = aws_subnet.private_3.id
   key_name      = aws_key_pair.ssh_key.key_name
+  security_groups = [aws_security_group.backups_sg.id]
 
   tags = {
     Name = "BACKUPS"
@@ -553,6 +555,7 @@ resource "aws_instance" "gancio" {
   instance_type = "t2.micro"
   subnet_id     = aws_subnet.private_4.id
   key_name      = aws_key_pair.ssh_key.key_name
+  security_groups = [aws_security_group.gancio_sg.id]
 
   tags = {
     Name = "GANCIO-1"
@@ -566,6 +569,7 @@ resource "aws_instance" "gancio" {
   instance_type = "t2.micro"
   subnet_id     = aws_subnet.private_4.id
   key_name      = aws_key_pair.ssh_key.key_name
+  security_groups = [aws_security_group.prometheus_sg.id]
 
   tags = {
     Name = "PROMETHEUS"
