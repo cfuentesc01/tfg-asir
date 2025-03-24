@@ -564,7 +564,7 @@ resource "aws_instance" "gancio" {
 
 // Creación de la instancia de Prometheus con Grafana
 
-resource "aws_instance" "gancio" {
+resource "aws_instance" "prometheus" {
   ami           = "ami-04b4f1a9cf54c11d0"
   instance_type = "t2.micro"
   subnet_id     = aws_subnet.private_4.id
