@@ -458,7 +458,7 @@ resource "aws_security_group" "backups_sg" {
   }
 
   # Reglas de salida: permitir tráfico saliente a cualquier destino
-  egress {
+  ingress {
     from_port   = 0
     to_port     = 0
     protocol    = "-1"
