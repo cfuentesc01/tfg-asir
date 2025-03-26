@@ -142,7 +142,7 @@ resource "aws_key_pair" "ssh_key" {
 
 resource "aws_security_group" "nginx-1_sg" {
   name        = "nginx-security-group"
-  description = "Permitir tráfico HTTP, HTTPS y SSH"
+  description = "Permitir trafico HTTP, HTTPS y SSH"
   vpc_id      = aws_vpc.tfg_asir_vpc.id
 
   # Permitir SSH solo desde tu IP (reemplaza con tu IP pública)
@@ -186,7 +186,7 @@ resource "aws_security_group" "nginx-1_sg" {
 
 resource "aws_security_group" "nginx-2_sg" {
   name        = "nginx-security-group"
-  description = "Permitir tráfico HTTP, HTTPS y SSH"
+  description = "Permitir trafico HTTP, HTTPS y SSH"
   vpc_id      = aws_vpc.tfg_asir_vpc.id
 
   # Permitir SSH solo desde tu IP (reemplaza con tu IP pública)
