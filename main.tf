@@ -141,7 +141,7 @@ resource "aws_key_pair" "ssh_key" {
 // Creación del grupo de seguridad de Nginx - 1
 
 resource "aws_security_group" "nginx-1_sg" {
-  name        = "nginx-security-group"
+  name        = "nginx-1-security-group"
   description = "Permitir trafico HTTP, HTTPS y SSH"
   vpc_id      = aws_vpc.tfg_asir_vpc.id
 
@@ -185,7 +185,7 @@ resource "aws_security_group" "nginx-1_sg" {
 // Creación del grupo de seguridad de Nginx - 2
 
 resource "aws_security_group" "nginx-2_sg" {
-  name        = "nginx-security-group"
+  name        = "nginx-2-security-group"
   description = "Permitir trafico HTTP, HTTPS y SSH"
   vpc_id      = aws_vpc.tfg_asir_vpc.id
 
