@@ -13,10 +13,6 @@ provider "aws" {
 ########### CREACIÓN VPC ############
 #####################################
 
-provider "aws" {
-  region = "us-east-1"
-}
-
 resource "aws_vpc" "tfg_asir_vpc" {
   cidr_block       = "10.208.0.0/16"
   instance_tenancy = "default"
@@ -185,7 +181,7 @@ resource "aws_security_group" "nginx-1_sg" {
   description = "Permitir trafico HTTP, HTTPS y SSH"
   vpc_id      = aws_vpc.tfg_asir_vpc.id
 
-  # Permitir SSH solo desde tu IP (reemplaza con tu IP pública)
+  # Permitir SSH 
   ingress {
     from_port   = 22
     to_port     = 22
@@ -523,9 +519,9 @@ resource "aws_security_group" "backups_sg" {
 resource "aws_instance" "nginx_1" {
   ami           = "ami-04b4f1a9cf54c11d0"
   instance_type = "t2.micro"
-  subnet_id     = aws_subnet.public_1.id
+  subnet_id     = aws_subnet.public1.id
   key_name      = aws_key_pair.ssh_key.key_name
-  security_groups = [aws_security_group.nginx-1_sg.id]
+  vpc_security_group_ids = [aws_security_group.nginx-1_sg.id]
 
   tags = {
     Name = "NGINX-1"
@@ -537,7 +533,7 @@ resource "aws_instance" "nginx_1" {
 resource "aws_instance" "nginx_2" {
   ami           = "ami-04b4f1a9cf54c11d0"
   instance_type = "t2.micro"
-  subnet_id     = aws_subnet.public_2.id
+  subnet_id     = aws_subnet.public2.id
   key_name      = aws_key_pair.ssh_key.key_name
   security_groups = [aws_security_group.nginx-2_sg.id]
   tags = {
@@ -550,7 +546,7 @@ resource "aws_instance" "nginx_2" {
 resource "aws_instance" "lemmy" {
   ami           = "ami-04b4f1a9cf54c11d0"
   instance_type = "t2.micro"
-  subnet_id     = aws_subnet.private_3.id
+  subnet_id     = aws_subnet.private1.id
   key_name      = aws_key_pair.ssh_key.key_name
   security_groups = [aws_security_group.lemmy_sg.id]
 
@@ -564,7 +560,7 @@ resource "aws_instance" "lemmy" {
 resource "aws_instance" "backups" {
   ami           = "ami-04b4f1a9cf54c11d0"
   instance_type = "t3.small"
-  subnet_id     = aws_subnet.private_3.id
+  subnet_id     = aws_subnet.private1.id
   key_name      = aws_key_pair.ssh_key.key_name
   security_groups = [aws_security_group.backups_sg.id]
 
@@ -595,7 +591,7 @@ resource "aws_instance" "backups" {
 resource "aws_instance" "gancio" {
   ami           = "ami-04b4f1a9cf54c11d0"
   instance_type = "t2.micro"
-  subnet_id     = aws_subnet.private_4.id
+  subnet_id     = aws_subnet.private2.id
   key_name      = aws_key_pair.ssh_key.key_name
   security_groups = [aws_security_group.gancio_sg.id]
 
@@ -609,7 +605,7 @@ resource "aws_instance" "gancio" {
 resource "aws_instance" "prometheus" {
   ami           = "ami-04b4f1a9cf54c11d0"
   instance_type = "t2.micro"
-  subnet_id     = aws_subnet.private_4.id
+  subnet_id     = aws_subnet.private2.id
   key_name      = aws_key_pair.ssh_key.key_name
   security_groups = [aws_security_group.prometheus_sg.id]
 
@@ -644,7 +640,7 @@ resource "aws_db_instance" "rds_postgres_lemmy" {
 
 resource "aws_db_subnet_group" "lemmy_rds_subnet_group" {
   name       = "lemmy-rds-subnet-group"
-  subnet_ids = [aws_subnet.private_3.id, aws_subnet.private_4.id] # Asegura 2 AZs
+  subnet_ids = [aws_subnet.private1.id] 
 
   tags = {
     Name = "Lemmy RDS Subnet Group"
@@ -684,7 +680,7 @@ resource "aws_db_instance" "rds_mysql_gancio" {
 
 resource "aws_db_subnet_group" "gancio_rds_subnet_group" {
   name       = "gancio-rds-subnet-group"
-  subnet_ids = [aws_subnet.private_3.id, aws_subnet.private_4.id] # Asegura 2 AZs
+  subnet_ids = [aws_subnet.private2.id] 
 
   tags = {
     Name = "Gancio RDS Subnet Group"
