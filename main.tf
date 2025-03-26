@@ -13,54 +13,56 @@ provider "aws" {
 ########### CREACIÓN VPC ############
 #####################################
 
+provider "aws" {
+  region = "us-east-1"
+}
+
 resource "aws_vpc" "tfg_asir_vpc" {
-  cidr_block = "10.208.0.0/16"
-  enable_dns_hostnames = true
+  cidr_block       = "10.208.0.0/16"
+  instance_tenancy = "default"
 
   tags = {
-    Name = "tfg-asir-vpc"
+    Name = "tfg_asir_vpc-vpc"
   }
 }
 
-resource "aws_subnet" "public_1" {
+resource "aws_subnet" "public1" {
   vpc_id            = aws_vpc.tfg_asir_vpc.id
   cidr_block        = "10.208.1.0/24"
   availability_zone = "us-east-1a"
-  map_public_ip_on_launch = true
 
   tags = {
-    Name = "tfg-asir-subnet-public1"
+    Name = "tfg_asir_vpc-subnet-public1-us-east-1a"
   }
 }
 
-resource "aws_subnet" "public_2" {
+resource "aws_subnet" "public2" {
   vpc_id            = aws_vpc.tfg_asir_vpc.id
   cidr_block        = "10.208.2.0/24"
   availability_zone = "us-east-1b"
-  map_public_ip_on_launch = true
 
   tags = {
-    Name = "tfg-asir-subnet-public2"
+    Name = "tfg_asir_vpc-subnet-public2-us-east-1b"
   }
 }
 
-resource "aws_subnet" "private_3" {
+resource "aws_subnet" "private1" {
   vpc_id            = aws_vpc.tfg_asir_vpc.id
   cidr_block        = "10.208.3.0/24"
   availability_zone = "us-east-1a"
 
   tags = {
-    Name = "tfg-asir-subnet-private3"
+    Name = "tfg_asir_vpc-subnet-private1-us-east-1a"
   }
 }
 
-resource "aws_subnet" "private_4" {
+resource "aws_subnet" "private2" {
   vpc_id            = aws_vpc.tfg_asir_vpc.id
   cidr_block        = "10.208.4.0/24"
-  availability_zone = "us-east-1c"
+  availability_zone = "us-east-1b"
 
   tags = {
-    Name = "tfg-asir-subnet-private4"
+    Name = "tfg_asir_vpc-subnet-private2-us-east-1b"
   }
 }
 
@@ -68,7 +70,7 @@ resource "aws_internet_gateway" "igw" {
   vpc_id = aws_vpc.tfg_asir_vpc.id
 
   tags = {
-    Name = "tfg-asir-igw"
+    Name = "tfg_asir_vpc-igw"
   }
 }
 
@@ -81,24 +83,38 @@ resource "aws_route_table" "public" {
   }
 
   tags = {
-    Name = "tfg-asir-rtb-public"
+    Name = "tfg_asir_vpc-rtb-public"
+  }
+}
+
+resource "aws_route_table_association" "public1" {
+  subnet_id      = aws_subnet.public1.id
+  route_table_id = aws_route_table.public.id
+}
+
+resource "aws_route_table_association" "public2" {
+  subnet_id      = aws_subnet.public2.id
+  route_table_id = aws_route_table.public.id
+}
+
+resource "aws_eip" "nat_eip" {
+  domain = "vpc"
+
+  tags = {
+    Name = "tfg_asir_vpc-eip-us-east-1a"
   }
 }
 
 resource "aws_nat_gateway" "nat" {
-  allocation_id = aws_eip.nat.id
-  subnet_id     = aws_subnet.public_1.id
+  allocation_id = aws_eip.nat_eip.id
+  subnet_id     = aws_subnet.public1.id
 
   tags = {
-    Name = "tfg-asir-nat"
+    Name = "tfg_asir_vpc-nat-public1-us-east-1a"
   }
 }
 
-resource "aws_eip" "nat" {
-  domain = "vpc"
-}
-
-resource "aws_route_table" "private" {
+resource "aws_route_table" "private1" {
   vpc_id = aws_vpc.tfg_asir_vpc.id
 
   route {
@@ -107,9 +123,33 @@ resource "aws_route_table" "private" {
   }
 
   tags = {
-    Name = "tfg-asir-rtb-private"
+    Name = "tfg_asir_vpc-rtb-private1-us-east-1a"
   }
 }
+
+resource "aws_route_table_association" "private1" {
+  subnet_id      = aws_subnet.private1.id
+  route_table_id = aws_route_table.private1.id
+}
+
+resource "aws_route_table" "private2" {
+  vpc_id = aws_vpc.tfg_asir_vpc.id
+
+  route {
+    cidr_block     = "0.0.0.0/0"
+    nat_gateway_id = aws_nat_gateway.nat.id
+  }
+
+  tags = {
+    Name = "tfg_asir_vpc-rtb-private2-us-east-1b"
+  }
+}
+
+resource "aws_route_table_association" "private2" {
+  subnet_id      = aws_subnet.private2.id
+  route_table_id = aws_route_table.private2.id
+}
+
 
 #####################################
 ######## CREACIÓN CLAVES SSH ########
@@ -150,7 +190,7 @@ resource "aws_security_group" "nginx-1_sg" {
     from_port   = 22
     to_port     = 22
     protocol    = "tcp"
-    cidr_blocks = ["10.208.0.0/16"]
+    cidr_blocks = ["0.0.0.0/0"]
   }
 
   # Permitir tráfico HTTP desde cualquier lugar
@@ -194,7 +234,7 @@ resource "aws_security_group" "nginx-2_sg" {
     from_port   = 22
     to_port     = 22
     protocol    = "tcp"
-    cidr_blocks = ["10.208.0.0/16"]
+    cidr_blocks = ["0.0.0.0/0"]
   }
 
   # Permitir tráfico HTTP desde cualquier lugar
@@ -238,7 +278,8 @@ resource "aws_security_group" "lemmy_sg" {
     from_port   = 22
     to_port     = 22
     protocol    = "tcp"
-    cidr_blocks = ["10.208.0.0/16"] 
+    cidr_blocks = ["0.0.0.0/0"]
+
   }
 
   # Permitir acceso a Lemmy desde las instancias NGINX
@@ -262,7 +303,7 @@ resource "aws_security_group" "lemmy_sg" {
     from_port   = 9100
     to_port     = 9100
     protocol    = "tcp"
-    cidr_blocks = ["10.208.0.0/16"]  # Toda la VPC puede monitorizar
+    cidr_blocks = ["0.0.0.0/0"]
   }
 
   # Salida permitida a cualquier destino (Internet vía NAT Gateway)
@@ -290,7 +331,7 @@ resource "aws_security_group" "gancio_sg" {
     from_port   = 22
     to_port     = 22
     protocol    = "tcp"
-    cidr_blocks = ["10.208.0.0/16"]  # Toda la VPC puede acceder por SSH
+    cidr_blocks = ["0.0.0.0/0"]
   }
 
   # Permitir acceso a la interfaz web de Gancio (puerto 8000) desde la VPC
@@ -298,7 +339,7 @@ resource "aws_security_group" "gancio_sg" {
     from_port   = 8000
     to_port     = 8000
     protocol    = "tcp"
-    cidr_blocks = ["10.208.0.0/16"]  # Toda la VPC puede acceder a Gancio
+    cidr_blocks = ["0.0.0.0/0"]
   }
 
   # Permitir tráfico SMTP (Postfix - envío de correos)
@@ -329,7 +370,7 @@ resource "aws_security_group" "gancio_sg" {
     from_port   = 3306
     to_port     = 3306
     protocol    = "tcp"
-    cidr_blocks = ["10.208.0.0/16"]  # Acceso desde cualquier instancia en la VPC
+    cidr_blocks = ["0.0.0.0/0"]  # Acceso desde cualquier instancia en la VPC
   }
 
   # Permitir que Prometheus acceda a Gancio para monitorización (puerto 9100)
@@ -337,7 +378,7 @@ resource "aws_security_group" "gancio_sg" {
     from_port   = 9100
     to_port     = 9100
     protocol    = "tcp"
-    cidr_blocks = ["10.208.0.0/16"]  # Toda la VPC puede monitorizar
+    cidr_blocks = ["0.0.0.0/0"]  # Toda la VPC puede monitorizar
   }
 
   # Permitir consultas DNS salientes (necesario para Postfix)
@@ -374,7 +415,7 @@ resource "aws_security_group" "prometheus_sg" {
     from_port   = 22
     to_port     = 22
     protocol    = "tcp"
-    cidr_blocks = ["10.208.0.0/16"]  # Toda la VPC puede acceder por SSH
+    cidr_blocks = ["0.0.0.0/0"]  # Toda la VPC puede acceder por SSH
   }
 
   # Permitir acceso a la interfaz web de Prometheus (9090) desde cualquier instancia de la VPC
@@ -382,7 +423,7 @@ resource "aws_security_group" "prometheus_sg" {
     from_port   = 9090
     to_port     = 9090
     protocol    = "tcp"
-    cidr_blocks = ["10.208.0.0/16"]  # Toda la VPC puede acceder a Prometheus
+    cidr_blocks = ["0.0.0.0/0"]  # Toda la VPC puede acceder a Prometheus
   }
 
   # Permitir recepción de métricas desde cualquier instancia de la VPC
@@ -390,7 +431,7 @@ resource "aws_security_group" "prometheus_sg" {
     from_port   = 9090
     to_port     = 9090
     protocol    = "tcp"
-    cidr_blocks = ["10.208.0.0/16"]  # Toda la VPC puede enviar métricas
+    cidr_blocks = ["0.0.0.0/0"]  # Toda la VPC puede enviar métricas
   }
 
   # Permitir acceso a la interfaz web de Grafana (3000) desde cualquier instancia de la VPC
@@ -398,7 +439,7 @@ resource "aws_security_group" "prometheus_sg" {
     from_port   = 3000
     to_port     = 3000
     protocol    = "tcp"
-    cidr_blocks = ["10.208.0.0/16"]  # Toda la VPC puede acceder a Grafana
+    cidr_blocks = ["0.0.0.0/0"]  # Toda la VPC puede acceder a Grafana
   }
 
   # Permitir salida a Internet (para actualizaciones, etc.)
@@ -426,7 +467,7 @@ resource "aws_security_group" "backups_sg" {
     from_port   = 22
     to_port     = 22
     protocol    = "tcp"
-    cidr_blocks = ["10.208.0.0/16"]
+    cidr_blocks = ["0.0.0.0/0"]
     description = "SSH desde la VPC"
   }
 
@@ -435,7 +476,7 @@ resource "aws_security_group" "backups_sg" {
     from_port   = 443
     to_port     = 443
     protocol    = "tcp"
-    cidr_blocks = ["10.208.0.0/16"]
+    cidr_blocks = ["0.0.0.0/0"]
     description = "Interfaz Web OpenMediaVault desde la VPC"
   }
 
@@ -444,7 +485,7 @@ resource "aws_security_group" "backups_sg" {
     from_port   = 3306
     to_port     = 3306
     protocol    = "tcp"
-    cidr_blocks = ["10.208.0.0/16"]
+    cidr_blocks = ["0.0.0.0/0"]
     description = "Acceso a MySQL RDS desde Backups"
   }
 
@@ -453,7 +494,7 @@ resource "aws_security_group" "backups_sg" {
     from_port   = 5432
     to_port     = 5432
     protocol    = "tcp"
-    cidr_blocks = ["10.208.0.0/16"]
+    cidr_blocks = ["0.0.0.0/0"]
     description = "Acceso a PostgreSQL RDS desde Backups"
   }
 
