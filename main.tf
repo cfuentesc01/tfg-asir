@@ -547,7 +547,7 @@ resource "aws_instance" "nginx_2" {
 
 resource "aws_instance" "lemmy" {
   ami           = "ami-04b4f1a9cf54c11d0"
-  instance_type = "t2.micro"
+  instance_type = "t3.medium"
   private_ip    = "10.208.3.50"
   subnet_id     = aws_subnet.private1.id
   key_name      = aws_key_pair.ssh_key.key_name
