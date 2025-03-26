@@ -640,7 +640,7 @@ resource "aws_db_instance" "rds_postgres_lemmy" {
 
 resource "aws_db_subnet_group" "lemmy_rds_subnet_group" {
   name       = "lemmy-rds-subnet-group"
-  subnet_ids = [aws_subnet.private1.id] 
+  subnet_ids = [aws_subnet.private2.id, aws_subnet.private1.id] 
 
   tags = {
     Name = "Lemmy RDS Subnet Group"
@@ -680,7 +680,7 @@ resource "aws_db_instance" "rds_mysql_gancio" {
 
 resource "aws_db_subnet_group" "gancio_rds_subnet_group" {
   name       = "gancio-rds-subnet-group"
-  subnet_ids = [aws_subnet.private2.id] 
+  subnet_ids = [aws_subnet.private2.id, aws_subnet.private1.id] 
 
   tags = {
     Name = "Gancio RDS Subnet Group"
