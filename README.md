@@ -30,11 +30,38 @@ Ambos servicios se desplegarán en un entorno seguro y escalable, con la integra
 - **Postfix SMTP** (notificaciones de eventos por email)
 - **Firewall y reglas IAM estrictas** (seguridad)
 
-## 🚀 Instalación y Despliegue
+## 💡Costo Mensual Estimado en AWS (us-east-1)
+
+| Componente         | Tipo/Detalle               | Cantidad | Costo/Hora | Costo/Mes (24/7) |
+|--------------------|----------------------------|----------|------------|------------------|
+| **EC2 Instances**  |                            |          |            |                  |
+| NGINX-1 & NGINX-2  | `t2.micro`                 | 2        | $0.0116    | $16.70           |
+| Lemmy              | `t3.medium`                | 1        | $0.0416    | $30.00           |
+| Backups            | `t3.small`                 | 1        | $0.0208    | $15.00           |
+| Gancio             | `t2.micro`                 | 1        | $0.0116    | $8.35            |
+| Prometheus         | `t2.micro`                 | 1        | $0.0116    | $8.35            |
+| **EBS Storage**    |                            |          |            |                  |
+| Lemmy              | 50 GB (gp3)                | 1        | -          | $4.00            |
+| Backups            | 80 GB total (gp3)          | 1        | -          | $6.40            |
+| Gancio             | 30 GB (gp3)                | 1        | -          | $2.40            |
+| **RDS Databases**  |                            |          |            |                  |
+| PostgreSQL (Lemmy) | `db.t3.micro` + 20 GB      | 1        | $0.036     | $27.52           |
+| MySQL (Gancio)     | `db.t3.micro` + 20 GB      | 1        | $0.036     | $27.52           |
+| **Networking**     |                            |          |            |                  |
+| NAT Gateway        | -                          | 1        | $0.045     | $32.85           |
+| Data Transfer      | ~10 GB saliente            | -        | -          | $0.90            |
+
+**Total Estimado:** $180 - $200 USD/mes  
 
 ### 1️⃣ Desplegar proyecto en AWS
 ```bash
 git clone https://github.com/cfuentesc01/tfg-asir.git
 cd tfg-asir
-./main.tf
+cd scripts
+chmod +x terraform.sh
+./terraform.sh
+cd ..
+terraform init
+terraform plan
+terraform apply
 ```
