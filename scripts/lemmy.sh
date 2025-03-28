@@ -23,8 +23,9 @@ sha256sum magick
 sudo mv magick /usr/bin/
 sudo chmod 755 /usr/bin/magick
 
-sudo apt install rustup
-sudo apt install cargo
+sudo apt install rustup -y
+sudo apt install cargo -y 
+sudo apt install -y build-essential libpq-dev
 
 # Lemmy backend
 sudo adduser lemmy --system --disabled-login --no-create-home --group
@@ -34,3 +35,33 @@ git checkout 0.18.5
 git submodule init
 git submodule update
 cargo build --release
+
+# Deployment
+sudo mkdir /opt/lemmy
+sudo mkdir /opt/lemmy/lemmy-server
+sudo mkdir /opt/lemmy/pictrs
+sudo mkdir /opt/lemmy/pictrs/files
+sudo mkdir /opt/lemmy/pictrs/sled-repo
+sudo mkdir /opt/lemmy/pictrs/old
+sudo chown -R lemmy:lemmy /opt/lemmy
+
+sudo cp target/release/lemmy_server /opt/lemmy/lemmy-server/lemmy_server
+
+# Configuration
+
+
+# LEMMY - UI
+
+# Instalando NodeJS
+sudo apt install -y ca-certificates curl gnupg
+sudo mkdir -p /etc/apt/keyrings
+curl -fsSL https://deb.nodesource.com/gpgkey/nodesource-repo.gpg.key | sudo gpg --dearmor -o /etc/apt/keyrings/nodesource.gpg
+echo "deb [signed-by=/etc/apt/keyrings/nodesource.gpg] https://deb.nodesource.com/node_20.x nodistro main" | sudo tee /etc/apt/sources.list.d/nodesource.list
+
+sudo apt update
+sudo apt install nodejs -y
+
+# pnpm
+npm i -g pnpm
+
+
