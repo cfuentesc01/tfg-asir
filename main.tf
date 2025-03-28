@@ -608,6 +608,10 @@ resource "aws_instance" "gancio" {
   tags = {
     Name = "GANCIO-1"
   }
+  root_block_device {
+    volume_size = 30  # Disco duro
+    volume_type = "gp3"
+  }
 }
 
 // Creación de la instancia de Prometheus con Grafana
