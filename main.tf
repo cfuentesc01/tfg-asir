@@ -393,6 +393,14 @@ resource "aws_security_group" "gancio_sg" {
     cidr_blocks = ["0.0.0.0/0"]
   }
 
+  # Puerto Gancio
+  ingress {
+    from_port   = 13120
+    to_port     = 13120
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
   tags = {
     Name = "Gancio Security Group"
   }
