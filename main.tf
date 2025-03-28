@@ -558,7 +558,7 @@ resource "aws_instance" "lemmy" {
   }
 
     root_block_device {
-    volume_size = 30  # Disco duro
+    volume_size = 50  # Disco duro
     volume_type = "gp3"
   }
 }
