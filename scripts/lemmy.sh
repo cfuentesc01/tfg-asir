@@ -17,7 +17,7 @@ CREATE DATABASE lemmy WITH OWNER lemmy;
 sudo apt install protobuf-compiler gcc -y
 
 # Instalando ImageMagick
-sudo apt install ffmpeg exiftool libgexiv2-dev --no-install-recommends
+sudo apt install -y ffmpeg exiftool libgexiv2-dev --no-install-recommends 
 wget https://download.imagemagick.org/ImageMagick/download/binaries/magick
 sha256sum magick
 sudo mv magick /usr/bin/
