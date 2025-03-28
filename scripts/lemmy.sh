@@ -49,9 +49,59 @@ sudo cp target/release/lemmy_server /opt/lemmy/lemmy-server/lemmy_server
 
 # Configuration
 
+# Ruta del archivo de configuración
+LEMMY_FILE="/opt/lemmy/lemmy-server/lemmy.hjson"
+
+cat <<EOL > "$LEMMY_FILE"
+{
+  "database": {
+    "password": "1234567890asd."
+  },
+  "hostname": "lemmy-tfg-duckdns.org",
+  "bind": "127.0.0.1",
+  "federation": {
+    "enabled": true
+  },
+  "pictrs": {
+    "url": "http://localhost:8080/"
+  }
+}
+EOL
+
+sudo chown -R lemmy:lemmy /opt/lemmy/
+
+SERVICE_FILE="/etc/systemd/system/lemmy.service"
+
+cat <<EOL > "$SERVICE_FILE"
+{
+[unit]
+Description=Lemmy Server
+After=network.target
+
+[Service]
+User=lemmy
+ExecStart=/opt/lemmy/lemmy-server/lemmy_server
+Environment=LEMMY_CONFIG_LOCATION=/opt/lemmy/lemmy-server/lemmy.hjson
+Environment=PICTRS_ADDR=127.0.0.1:8080
+Environment=RUST_LOG="info"
+Restart=on-failure
+WorkingDirectory=/opt/lemmy
+
+# Hardening
+ProtectSystem=yes
+PrivateTmp=true
+MemoryDenyWriteExecute=true
+NoNewPrivileges=true
+
+[Install]
+WantedBy=multi-user.target
+EOL
+
+sudo systemctl daemon-reload
+sudo systemctl enable lemmy
+sudo systemctl start lemmy
 
 # LEMMY - UI
-
 # Instalando NodeJS
 sudo apt install -y ca-certificates curl gnupg
 sudo mkdir -p /etc/apt/keyrings
@@ -60,6 +110,7 @@ echo "deb [signed-by=/etc/apt/keyrings/nodesource.gpg] https://deb.nodesource.co
 
 sudo apt update
 sudo apt install nodejs -y
+sudo chown -R $(whoami) /usr/bin /usr/lib/node_modules
 
 # pnpm
 npm i -g pnpm
