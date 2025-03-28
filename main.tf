@@ -520,6 +520,7 @@ resource "aws_instance" "nginx_1" {
   ami           = "ami-04b4f1a9cf54c11d0"
   instance_type = "t2.micro"
   private_ip    = "10.208.1.100"
+  associate_public_ip_address = true
   subnet_id     = aws_subnet.public1.id
   key_name      = aws_key_pair.ssh_key.key_name
   vpc_security_group_ids = [aws_security_group.nginx-1_sg.id]
@@ -535,6 +536,7 @@ resource "aws_instance" "nginx_2" {
   ami           = "ami-04b4f1a9cf54c11d0"
   instance_type = "t2.micro"
   private_ip    = "10.208.2.100"
+  associate_public_ip_address = true
   subnet_id     = aws_subnet.public2.id
   key_name      = aws_key_pair.ssh_key.key_name
   security_groups = [aws_security_group.nginx-2_sg.id]
