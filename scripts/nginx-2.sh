@@ -28,6 +28,22 @@ server {
   listen [::]:80;
   server_name gancio-tfg.duckdns.org;
 
+  # Redirección automática de HTTP a HTTPS
+  return 301 https://$host$request_uri;
+}
+
+server {
+  listen 443 ssl http2;
+  listen [::]:443 ssl http2;
+  server_name gancio-tfg.duckdns.org;
+
+  ssl_certificate /etc/letsencrypt/live/gancio-tfg.duckdns.org/fullchain.pem;
+  ssl_certificate_key /etc/letsencrypt/live/gancio-tfg.duckdns.org/privkey.pem;
+  ssl_trusted_certificate /etc/letsencrypt/live/gancio-tfg.duckdns.org/chain.pem;
+
+  ssl_protocols TLSv1.2 TLSv1.3;
+  ssl_prefer_server_ciphers on;
+
   keepalive_timeout    70;
   sendfile             on;
   client_max_body_size 80m;
@@ -36,7 +52,7 @@ server {
     try_files $uri @proxy;
   }
 
-location @proxy {
+  location @proxy {
     proxy_pass http://10.208.4.70:13120;
     proxy_redirect / /;
     proxy_set_header Host $host;
@@ -47,7 +63,7 @@ location @proxy {
     # Soporte para WebSockets
     proxy_set_header Upgrade $http_upgrade;
     proxy_set_header Connection "Upgrade";
-}
+  }
 
   error_log /var/log/nginx/gancio_error.log;
   access_log /var/log/nginx/gancio_access.log;
