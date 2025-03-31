@@ -6,9 +6,9 @@ PROMETHEUS_SERVICE="/etc/systemd/system/prometheus.service"
 # Cosas previas a la instalación
 sudo apt update
 sudo useradd --no-create-home --shell /bin/false prometheus
-sudo mkdir /etc/prometheus
-sudo mkdir /var/lib/prometheus
-sudo chown -R prometheus:prometheus /var/lib/prometheus/
+sudo mkdir -p /etc/prometheus
+sudo mkdir -p /var/lib/prometheus
+sudo chown -R prometheus:prometheus /etc/prometheus /var/lib/prometheus
 
 # Instalar Prometheus
 wget https://github.com/prometheus/prometheus/releases/download/v3.3.0-rc.0/prometheus-3.3.0-rc.0.linux-amd64.tar.gz
@@ -17,12 +17,8 @@ cd prometheus-3.3.0-rc.0.linux-amd64/
 sudo cp promtool /usr/local/bin
 sudo cp prometheus /usr/local/bin
 
-sudo touch /etc/prometheus/prometheus.yml
-sudo chown -R prometheus:prometheus /etc/prometheus/prometheus.yml
-
-# Implantando configuración
-sudo cat > $PROMETHEUS_FILE << EOF
-# Configuración Global.
+# Crear el archivo de configuración de Prometheus con contenido directamente
+echo "# Configuración Global.
 global:
   scrape_interval: 15s 
   evaluation_interval: 15s
@@ -30,13 +26,13 @@ global:
 scrape_configs:
   - job_name: 'prometheus'
     static_configs:
-    - targets: ['localhost:9090'] #Solo realizara el monitoreo del servidor local.
+    - targets: ['localhost:9090'] #Solo realizara el monitoreo del servidor local." | sudo tee $PROMETHEUS_FILE > /dev/null
 
-EOF
+# Cambiar propiedad y permisos para que prometheus pueda escribir en el archivo
+sudo chown prometheus:prometheus $PROMETHEUS_FILE
 
-# Instalando Servicio
-sudo cat > $PROMETHEUS_SERVICE << EOF
-[Unit]
+# Crear el servicio de Prometheus con contenido directamente
+echo "[Unit]
 Description=Prometheus
 Wants=network-online.target
 After=network-online.target
@@ -52,8 +48,10 @@ ExecStart=/usr/local/bin/prometheus \
   --web.console.libraries=/etc/prometheus/console_libraries
 
 [Install]
-WantedBy=multi-user.target
-EOF
+WantedBy=multi-user.target" | sudo tee $PROMETHEUS_SERVICE > /dev/null
+
+# Cambiar propiedad y permisos para que prometheus pueda leer el archivo del servicio
+sudo chown root:root $PROMETHEUS_SERVICE
 
 # Inicializando servicio
 sudo systemctl daemon-reload
