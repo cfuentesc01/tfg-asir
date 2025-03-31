@@ -35,6 +35,45 @@ sudo systemctl enable gancio
 # Arrancar el servicio de gancio (puerto 13120)
 sudo systemctl start gancio
 
+cat > $GANCIO_FILE << EOF
+{
+  "baseurl": "http://gancio-tfg.duckdns.org",
+  "hostname": "gancio-tfg.duckdns.org",
+  "server": {
+    "host": "0.0.0.0",
+    "port": 13120,
+    "https": true
+  },
+  "log_level": "debug",
+  "log_path": "/opt/gancio/logs",
+  "db": {
+    "dialect": "mariadb",
+    "storage": "",
+    "host": "gancio-rds-mysql.cz44g2mci3yr.us-east-1.rds.amazonaws.com",
+    "database": "gancio",
+    "username": "gancio",
+    "password": "1234567890asd.",
+    "logging": false,
+    "dialectOptions": {
+      "autoJsonMap": true
+    }
+  },
+  "user_locale": "/opt/gancio/user_locale",
+  "upload_path": "/opt/gancio/uploads",
+  "mail": {
+    "smtp_server": "gancio-tfg.duckdns.org",
+    "smtp_port": 587,
+    "smtp_user": "tu_usuario@gancio-tfg.duckdns.org",
+    "smtp_pass": "tu_contraseña",
+    "smtp_tls": true,
+    "smtp_tls_cert_file": "/etc/ssl/certs/gancio-tfg.duckdns.org.crt",
+    "smtp_tls_key_file": "/etc/ssl/private/gancio-tfg.duckdns.org.key",
+    "smtp_from": "tu_usuario@gancio-tfg.duckdns.org",
+    "smtp_sender_name": "Gancio Server"
+  }
+}
+EOF
+
 # Instalar PostFix
 sudo apt update
 sudo apt install postfix mailutils -y
