@@ -330,6 +330,14 @@ resource "aws_security_group" "gancio_sg" {
     cidr_blocks = ["0.0.0.0/0"]
   }
 
+    # Puerto Gancio
+  ingress {
+    from_port   = 13120
+    to_port     = 13120
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
   # Permitir acceso a la interfaz web de Gancio (puerto 8000) desde la VPC
   ingress {
     from_port   = 8000
@@ -377,27 +385,11 @@ resource "aws_security_group" "gancio_sg" {
     cidr_blocks = ["0.0.0.0/0"]  # Toda la VPC puede monitorizar
   }
 
-  # Permitir consultas DNS salientes (necesario para Postfix)
-  egress {
-    from_port   = 53
-    to_port     = 53
-    protocol    = "udp"
-    cidr_blocks = ["0.0.0.0/0"]  # Salida global para consultas DNS
-  }
-
   # Permitir salida a Internet 
   egress {
     from_port   = 0
     to_port     = 0
     protocol    = "-1"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
-
-  # Puerto Gancio
-  ingress {
-    from_port   = 13120
-    to_port     = 13120
-    protocol    = "tcp"
     cidr_blocks = ["0.0.0.0/0"]
   }
 
