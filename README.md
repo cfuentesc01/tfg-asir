@@ -17,7 +17,7 @@ Ambos servicios se desplegarán en un entorno seguro y escalable, con la integra
 
 ## 🏗️ Arquitectura del Proyecto
 
-![Screenshot](docs/estructura.png)
+![Screenshot](docs/estructura.jpg)
 
 ## 🛠️ Tecnologías Utilizadas
 - **AWS** (EC2, RDS, VPC, Route 53)
