@@ -3,6 +3,7 @@
 GANCIO_FILE="/opt/gancio/config.json"
 POSTFIX1_FILE="/etc/postfix/main.cf"
 POSTFIX2_FILE="/etc/postfix/sasl_passwd"
+MAILNAME_FILE="/etc/mailname"
 
 # Instalar dependencias
 sudo apt update
@@ -15,7 +16,7 @@ sudo npm install -g yarn
 
 # Conexión con base de datos
 sudo apt install -y mysql-client
-mysql -h database-1.ct54twtvpwmw.us-east-1.rds.amazonaws.com -u carlosfc -p1234567890asd. <<EOF
+mysql -h mysql-gancio.ct54twtvpwmw.us-east-1.rds.amazonaws.com -u carlosfc -p1234567890asd. <<EOF
 CREATE DATABASE IF NOT EXISTS gancio;
 CREATE USER IF NOT EXISTS 'gancio'@'%' IDENTIFIED BY '1234567890asd.';
 GRANT ALL PRIVILEGES ON gancio.* TO 'gancio'@'%';
@@ -38,6 +39,9 @@ sudo systemctl enable gancio
 # Arrancar el servicio de gancio (puerto 13120)
 sudo systemctl start gancio
 
+# Crear el archivo /etc/mailname para evitar el error
+echo "gancio-tfg.duckdns.org" | sudo tee $MAILNAME_FILE
+
 sudo tee $GANCIO_FILE > /dev/null << EOF
 {
   "baseurl": "http://gancio-tfg.duckdns.org",
@@ -52,9 +56,9 @@ sudo tee $GANCIO_FILE > /dev/null << EOF
   "db": {
     "dialect": "mariadb",
     "storage": "",
-    "host": "database-1.ct54twtvpwmw.us-east-1.rds.amazonaws.com",
+    "host": "mysql-gancio.ct54twtvpwmw.us-east-1.rds.amazonaws.com",
     "database": "gancio",
-    "username": "gancio",
+    "username": "carlosfc",
     "password": "1234567890asd.",
     "logging": false,
     "dialectOptions": {
@@ -139,15 +143,13 @@ debug_peer_list = 127.0.0.1
 mailbox_command = /usr/bin/procmail
 EOF
 
-
-# Poner correo y contraseña
+# Configurar el archivo de contraseñas SASL
 sudo tee $POSTFIX2_FILE > /dev/null << EOF
-[smtp.gmail.com]:587    pedrosusto1312@gmail.com:jrcx hhlr htzd gluf
-
+[smtp.gmail.com]:587    $SMTP_USER:$SMTP_PASS
 EOF
 sudo postmap /etc/postfix/sasl_passwd
 sudo chmod 600 /etc/postfix/sasl_passwd
 sudo systemctl restart postfix
 
 # Comprobar si funcionó la instalación
-echo "Mensaje de prueba" | mail -s "Instalación correcta" pedrosusto1312@gmail.com
+echo "Mensaje de prueba" | mail -s "Instalación correcta" $SMTP_USER
