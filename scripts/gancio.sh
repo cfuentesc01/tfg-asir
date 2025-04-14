@@ -15,10 +15,13 @@ sudo npm install -g yarn
 
 # Conexión con base de datos
 sudo apt install -y mysql-client
-sudo mysql -h gancio-rds-mysql.cz44g2mci3yr.us-east-1.rds.amazonaws.com -u carlosfc -p1234567890asd.
-create database gancio;
-create user gancio identified by '1234567890asd.';
-grant all privileges on gancio.* to gancio;
+mysql -h database-1.ct54twtvpwmw.us-east-1.rds.amazonaws.com -u carlosfc -p1234567890asd. <<EOF
+CREATE DATABASE IF NOT EXISTS gancio;
+CREATE USER IF NOT EXISTS 'gancio'@'%' IDENTIFIED BY '1234567890asd.';
+GRANT ALL PRIVILEGES ON gancio.* TO 'gancio'@'%';
+FLUSH PRIVILEGES;
+EOF
+
 #exit
 
 # Crear usuario para ejecutar Gancio
@@ -35,7 +38,7 @@ sudo systemctl enable gancio
 # Arrancar el servicio de gancio (puerto 13120)
 sudo systemctl start gancio
 
-cat > $GANCIO_FILE << EOF
+sudo tee $GANCIO_FILE > /dev/null << EOF
 {
   "baseurl": "http://gancio-tfg.duckdns.org",
   "hostname": "gancio-tfg.duckdns.org",
@@ -49,7 +52,7 @@ cat > $GANCIO_FILE << EOF
   "db": {
     "dialect": "mariadb",
     "storage": "",
-    "host": "gancio-rds-mysql.cz44g2mci3yr.us-east-1.rds.amazonaws.com",
+    "host": "database-1.ct54twtvpwmw.us-east-1.rds.amazonaws.com",
     "database": "gancio",
     "username": "gancio",
     "password": "1234567890asd.",
@@ -81,7 +84,7 @@ sudo apt install procmail -y
 
 # Implantar configuracion
 # IMPLANTAR A MANO LOS CERTIFICADOS QUE HAY GUARDADOS
-cat > $POSTFIX1_FILE << EOF
+sudo tee $POSTFIX1_FILE > /dev/null << EOF
 # Configuración básica
 smtpd_banner = $myhostname ESMTP $mail_name (Carlos Fuentes)
 biff = no
@@ -138,7 +141,7 @@ EOF
 
 
 # Poner correo y contraseña
-cat > $POSTFIX1_FILE << EOF
+sudo tee $POSTFIX2_FILE > /dev/null << EOF
 [smtp.gmail.com]:587    pedrosusto1312@gmail.com:jrcx hhlr htzd gluf
 
 EOF
