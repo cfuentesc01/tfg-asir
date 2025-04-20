@@ -29,7 +29,7 @@ EOF
 sudo adduser --group --system --shell /bin/false --home /opt/gancio gancio
 
 # Instalar Gancio
-sudo yarn global add --network-timeout 1000000000 --silent https://gancio.org/latest.tgz
+sudo yarn global add --network-timeout 1000000000 --silent https://gancio.org/releases/gancio-v1.21.0.tgz
 
 # Instalar systemd service y reload systemd
 sudo wget http://gancio.org/gancio.service -O /etc/systemd/system/gancio.service
@@ -37,19 +37,20 @@ sudo systemctl daemon-reload
 sudo systemctl enable gancio
 
 # Arrancar el servicio de gancio (puerto 13120)
+sudo systemctl daemon-reload
 sudo systemctl start gancio
+sudo systemctl daemon-reload
 
 # Crear el archivo /etc/mailname para evitar el error
 echo "gancio-tfg.duckdns.org" | sudo tee $MAILNAME_FILE
 
 sudo tee $GANCIO_FILE > /dev/null << EOF
 {
-  "baseurl": "http://gancio-tfg.duckdns.org",
+  "baseurl": "https://gancio-tfg.duckdns.org",
   "hostname": "gancio-tfg.duckdns.org",
   "server": {
     "host": "0.0.0.0",
-    "port": 13120,
-    "https": true
+    "port": 13120
   },
   "log_level": "debug",
   "log_path": "/opt/gancio/logs",
@@ -58,7 +59,7 @@ sudo tee $GANCIO_FILE > /dev/null << EOF
     "storage": "",
     "host": "mysql-gancio.ct54twtvpwmw.us-east-1.rds.amazonaws.com",
     "database": "gancio",
-    "username": "carlosfc",
+    "username": "gancio",
     "password": "1234567890asd.",
     "logging": false,
     "dialectOptions": {
@@ -67,16 +68,16 @@ sudo tee $GANCIO_FILE > /dev/null << EOF
   },
   "user_locale": "/opt/gancio/user_locale",
   "upload_path": "/opt/gancio/uploads",
-  "mail": {
-    "smtp_server": "gancio-tfg.duckdns.org",
-    "smtp_port": 587,
-    "smtp_user": "tu_usuario@gancio-tfg.duckdns.org",
-    "smtp_pass": "tu_contraseña",
-    "smtp_tls": true,
-    "smtp_tls_cert_file": "/etc/ssl/certs/gancio-tfg.duckdns.org.crt",
-    "smtp_tls_key_file": "/etc/ssl/private/gancio-tfg.duckdns.org.key",
-    "smtp_from": "tu_usuario@gancio-tfg.duckdns.org",
-    "smtp_sender_name": "Gancio Server"
+  "proxy": {
+    "protocol": "",
+    "hostname": "",
+    "host": "",
+    "port": "",
+    "auth": {
+      "username": "",
+      "password": ""
+    },
+    "headers": {}
   }
 }
 EOF
@@ -85,6 +86,12 @@ EOF
 sudo apt update
 sudo apt install postfix mailutils -y
 sudo apt install procmail -y
+
+# Instalar Certbot
+sudo apt update 
+sudo apt install postfix -y
+
+echo "gancio-tfg.duckdns.org" | sudo tee /etc/mailname
 
 # Implantar configuracion
 # IMPLANTAR A MANO LOS CERTIFICADOS QUE HAY GUARDADOS
@@ -113,8 +120,8 @@ message_size_limit = 10485760
 smtpd_recipient_restrictions = permit_mynetworks permit_sasl_authenticated reject_unauth_destination
 
 # Configuración TLS/SSL
-smtpd_tls_cert_file = /etc/ssl/certs/gancio-tfg.duckdns.org.crt
-smtpd_tls_key_file = /etc/ssl/private/gancio-tfg.duckdns.org.key
+smtpd_tls_cert_file = /etc/letsencrypt/live/gancio-tfg.duckdns.org/fullchain.pem
+smtpd_tls_key_file = /etc/letsencrypt/live/gancio-tfg.duckdns.org/privkey.pem
 smtpd_tls_security_level = may
 smtp_tls_security_level = encrypt
 smtp_tls_CApath = /etc/ssl/certs
@@ -145,11 +152,13 @@ EOF
 
 # Configurar el archivo de contraseñas SASL
 sudo tee $POSTFIX2_FILE > /dev/null << EOF
-[smtp.gmail.com]:587    $SMTP_USER:$SMTP_PASS
+[smtp.gmail.com]:587    pedrosusto1312@gmail.com:jrcx hhlr htzd gluf
 EOF
 sudo postmap /etc/postfix/sasl_passwd
 sudo chmod 600 /etc/postfix/sasl_passwd
+sudo systemctl daemon-reload
 sudo systemctl restart postfix
+sudo systemctl daemon-reload
 
 # Comprobar si funcionó la instalación
-echo "Mensaje de prueba" | mail -s "Instalación correcta" $SMTP_USER
+echo "Mensaje de prueba" | mail -s "Instalación correcta" pedrosusto1312@gmail.com

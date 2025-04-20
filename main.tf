@@ -249,6 +249,29 @@ resource "aws_security_group" "nginx-2_sg" {
     cidr_blocks = ["0.0.0.0/0"]
   }
 
+  # Permitir tráfico Gancio
+  ingress {
+    from_port   = 13120
+    to_port     = 13120
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  # Permitir tráfico SMTP
+  ingress {
+    from_port   = 587
+    to_port     = 587
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  ingress {
+    from_port   = 465
+    to_port     = 465
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]  # Global para SMTPS
+  }
+
   # Permitir salida a cualquier destino
   egress {
     from_port   = 0
@@ -330,28 +353,28 @@ resource "aws_security_group" "gancio_sg" {
     cidr_blocks = ["0.0.0.0/0"]
   }
 
-    # Puerto Gancio
+  # Permitir HTTPS
+  ingress {
+    from_port   = 443
+    to_port     = 443
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  # Permitir HTTP
+  ingress {
+    from_port   = 80
+    to_port     = 80
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  # Puerto Gancio
   ingress {
     from_port   = 13120
     to_port     = 13120
     protocol    = "tcp"
     cidr_blocks = ["0.0.0.0/0"]
-  }
-
-  # Permitir acceso a la interfaz web de Gancio (puerto 8000) desde la VPC
-  ingress {
-    from_port   = 8000
-    to_port     = 8000
-    protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
-
-  # Permitir tráfico SMTP (Postfix - envío de correos)
-  ingress {
-    from_port   = 25
-    to_port     = 25
-    protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]  # Global para enviar correos SMTP
   }
 
   # Permitir SMTPS (SMTP seguro) y Submission (STARTTLS)
