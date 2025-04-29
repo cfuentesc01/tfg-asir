@@ -22,15 +22,17 @@ sudo snap connect certbot:plugin certbot-dns-duckdns
 #sudo certbot certonly --nginx --email "$EMAIL" --agree-tos --no-eff-email --domain "$DOMAIN"
 
 sudo tee $CONFIG_FILE > /dev/null << EOF
-limit_req_zone $binary_remote_addr zone={{domain}}_ratelimit:10m rate=1r/s;
+limit_req_zone $binary_remote_addr zone=lemmy-tfg.duckdns.org_ratelimit:10m rate=1r/s;
 
 server {
     listen 80;
     listen [::]:80;
-    server_name {{domain}};
+    server_name lemmy-tfg.duckdns.org;
+
     location /.well-known/acme-challenge/ {
         root /var/www/certbot;
     }
+
     location / {
         return 301 https://$host$request_uri;
     }
@@ -39,79 +41,65 @@ server {
 server {
     listen 443 ssl http2;
     listen [::]:443 ssl http2;
-    server_name {{domain}};
+    server_name lemmy-tfg.duckdns.org;
 
-    ssl_certificate /etc/letsencrypt/live/{{domain}}/fullchain.pem;
-    ssl_certificate_key /etc/letsencrypt/live/{{domain}}/privkey.pem;
+    ssl_certificate /etc/letsencrypt/live/lemmy-tfg.duckdns.org/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/lemmy-tfg.duckdns.org/privkey.pem;
 
-    # Various TLS hardening settings
-    # https://raymii.org/s/tutorials/Strong_SSL_Security_On_nginx.html
+    # TLS settings
     ssl_protocols TLSv1.2 TLSv1.3;
     ssl_prefer_server_ciphers on;
-    ssl_ciphers 'ECDHE-ECDSA-AES256-GCM-SHA384:ECDHE-RSA-AES256-GCM-SHA384:ECDHE-ECDSA-CHACHA20-POLY1305:ECDHE-RSA-CHACHA20-POLY1305:ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES128-GCM-SHA256:ECDHE-ECDSA-AES256-SHA384:ECDHE-RSA-AES256-SHA384:ECDHE-ECDSA-AES128-SHA256:ECDHE-RSA-AES128-SHA256';
-    ssl_session_timeout  10m;
+    ssl_ciphers 'ECDHE-ECDSA-AES256-GCM-SHA384:ECDHE-RSA-AES256-GCM-SHA384:ECDHE-ECDSA-CHACHA20-POLY1305:ECDHE-RSA-CHACHA20-POLY1305:ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES128-GCM-SHA256';
+    ssl_session_timeout 10m;
     ssl_session_cache shared:SSL:10m;
-    ssl_session_tickets on;
     ssl_stapling on;
     ssl_stapling_verify on;
 
-    # Hide nginx version
+    # Security headers
     server_tokens off;
-
-    # Enable compression for JS/CSS/HTML bundle, for improved client load times.
-    # It might be nice to compress JSON, but leaving that out to protect against potential
-    # compression+encryption information leak attacks like BREACH.
-    gzip on;
-    gzip_types text/css application/javascript image/svg+xml;
-    gzip_vary on;
-
-    # Only connect to this site via HTTPS for the two years
     add_header Strict-Transport-Security "max-age=63072000";
-
-    # Various content security headers
     add_header Referrer-Policy "same-origin";
     add_header X-Content-Type-Options "nosniff";
     add_header X-Frame-Options "DENY";
     add_header X-XSS-Protection "1; mode=block";
 
-    # Upload limit for pictrs
     client_max_body_size 20M;
 
-    # frontend
+    # Frontend (Lemmy-UI)
     location / {
-      # The default ports:
+        proxy_pass http://10.208.3.50:1234;  # IP privada de Lemmy-UI
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection "upgrade";
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;  # Critical para HTTPS
 
-      set $proxpass "http://0.0.0.0:1234";
-      if ($http_accept ~ "^application/.*$") {
-        set $proxpass "http://0.0.0.0:8536";
-      }
-      if ($request_method = POST) {
-        set $proxpass "http://0.0.0.0:8536";
-      }
-      proxy_pass $proxpass;
-
-      rewrite ^(.+)/+$ $1 permanent;
-
-      # Send actual client IP upstream
-      proxy_set_header X-Real-IP $remote_addr;
-      proxy_set_header Host $host;
-      proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        # Manejar redirección 302 a /setup
+        proxy_intercept_errors on;
+        error_page 302 = @handle_redirect;
     }
 
-    # backend
+    # Backend (Lemmy)
     location ~ ^/(api|pictrs|feeds|nodeinfo|.well-known) {
-      proxy_pass http://0.0.0.0:8536;
-      proxy_http_version 1.1;
-      proxy_set_header Upgrade $http_upgrade;
-      proxy_set_header Connection "upgrade";
+        proxy_pass http://10.208.3.50:8536;  # IP privada de Lemmy
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection "upgrade";
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
 
-      # Rate limit
-      limit_req zone={{domain}}_ratelimit burst=30 nodelay;
+        limit_req zone=lemmy-tfg.duckdns.org_ratelimit burst=30 nodelay;
+    }
 
-      # Add IP forwarding headers
-      proxy_set_header X-Real-IP $remote_addr;
-      proxy_set_header Host $host;
-      proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    # Manejar redirección a /setup
+    location @handle_redirect {
+        proxy_pass http://10.208.3.50:1234$uri;  # Forzar manejo de redirección
+        proxy_set_header Host $host;
+        proxy_set_header X-Forwarded-Proto $scheme;
     }
 }
 
@@ -122,3 +110,6 @@ EOF
 sudo sed -i -e 's/{{domain}}/lemmy-tfg.duckdns.org/g' /etc/nginx/sites-enabled/lemmy.conf
 sudo systemctl reload nginx
 sudo systemctl daemon-reload
+
+
+sudo certbot --nginx -d lemmy-tfg.duckdns.org -d omv.lemmy-tfg.duckdns.org
