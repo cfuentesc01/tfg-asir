@@ -326,6 +326,14 @@ resource "aws_security_group" "lemmy_sg" {
     cidr_blocks = ["10.208.3.0/24"]  # Ajusta a la subred privada correcta
   }
 
+  # Permitir SMB para backups
+  ingress {
+    from_port   = 445
+    to_port     = 445
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
   # Permitir que Prometheus acceda a Gancio para monitorización (puerto 9100)
   ingress {
     from_port   = 9100
@@ -407,6 +415,14 @@ resource "aws_security_group" "gancio_sg" {
     to_port     = 3306
     protocol    = "tcp"
     cidr_blocks = ["0.0.0.0/0"]  # Acceso desde cualquier instancia en la VPC
+  }
+
+  # Permitir SMB para backups
+  ingress {
+    from_port   = 445
+    to_port     = 445
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
   }
 
   # Permitir que Prometheus acceda a Gancio para monitorización (puerto 9100)
@@ -524,6 +540,14 @@ resource "aws_security_group" "backups_sg" {
     protocol    = "tcp"
     cidr_blocks = ["0.0.0.0/0"]
     description = "Acceso a MySQL RDS desde Backups"
+  }
+
+  # Permitir SMB para backups
+  ingress {
+    from_port   = 445
+    to_port     = 445
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
   }
 
   # Permitir conexión a PostgreSQL RDS
