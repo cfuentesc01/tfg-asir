@@ -205,6 +205,15 @@ resource "aws_security_group" "nginx-1_sg" {
     cidr_blocks = ["0.0.0.0/0"]
   }
 
+  # Permitir acceso HTTPS a la interfaz web de OpenMediaVault
+  ingress {
+    from_port   = 8443
+    to_port     = 8443
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+    description = "Interfaz Web OpenMediaVault desde la VPC"
+  }
+
   # Permitir salida a cualquier destino
   egress {
     from_port   = 0
@@ -494,6 +503,15 @@ resource "aws_security_group" "backups_sg" {
   ingress {
     from_port   = 443
     to_port     = 443
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+    description = "Interfaz Web OpenMediaVault desde la VPC"
+  }
+
+    # Permitir acceso HTTPS a la interfaz web de OpenMediaVault
+  ingress {
+    from_port   = 8443
+    to_port     = 8443
     protocol    = "tcp"
     cidr_blocks = ["0.0.0.0/0"]
     description = "Interfaz Web OpenMediaVault desde la VPC"

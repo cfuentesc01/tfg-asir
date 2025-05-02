@@ -1,22 +1,35 @@
 #!/bin/bash
 
+# Instalando dependencias
 sudo apt update && sudo apt upgrade -y
-sudo apt install -y wget curl apt-transport-https gnupg2
+sudo apt-get install --yes gnupg
+sudo wget --quiet --output-document=- https://packages.openmediavault.org/public/archive.key | sudo gpg --dearmor --yes --output "/usr/share/keyrings/openmediavault-archive-keyring.gpg"
 
-# Añadir la clave GPG del repositorio
-sudo wget -O /etc/apt/trusted.gpg.d/openmediavault-archive-keyring.asc https://packages.openmediavault.org/public/archive.key
+# Añadiendo repositorios
+sudo tee /etc/apt/sources.list.d/openmediavault.list > /dev/null << EOF
+deb [signed-by=/usr/share/keyrings/openmediavault-archive-keyring.gpg] https://packages.openmediavault.org/public sandworm main
+# deb [signed-by=/usr/share/keyrings/openmediavault-archive-keyring.gpg] https://downloads.sourceforge.net/project/openmediavault/packages sandworm main
+## Uncomment the following line to add software from the proposed repository.
+# deb [signed-by=/usr/share/keyrings/openmediavault-archive-keyring.gpg] https://packages.openmediavault.org/public sandworm-proposed main
+# deb [signed-by=/usr/share/keyrings/openmediavault-archive-keyring.gpg] https://downloads.sourceforge.net/project/openmediavault/packages sandworm-proposed main
+## This software is not part of OpenMediaVault, but is offered by third-party
+## developers as a service to OpenMediaVault users.
+# deb [signed-by=/usr/share/keyrings/openmediavault-archive-keyring.gpg] https://packages.openmediavault.org/public sandworm partner
+# deb [signed-by=/usr/share/keyrings/openmediavault-archive-keyring.gpg] https://downloads.sourceforge.net/project/openmediavault/packages sandworm partner
 
-# Agregar el repositorio (OMV 7 "Sardaukar" para Debian 12)
-echo "deb [arch=amd64] https://packages.openmediavault.org/public sandworm main" | sudo tee /etc/apt/sources.list.d/openmediavault.list
+EOF
 
-# Actualizar repositorios
-sudo apt update
+# Instalando OpenMediaVault
+export LANG=C.UTF-8
+export DEBIAN_FRONTEND=noninteractive
+export APT_LISTCHANGES_FRONTEND=none
 
-# Instalar paquetes principales
-sudo apt install -y openmediavault-keyring openmediavault
+sudo apt-get update
+sudo apt-get --yes --auto-remove --show-upgraded \
+    --allow-downgrades --allow-change-held-packages \
+    --no-install-recommends \
+    --option DPkg::Options::="--force-confdef" \
+    --option DPkg::Options::="--force-confold" \
+    install openmediavault
 
-# Poblar la base de datos de configuración
 sudo omv-confdbadm populate
-
-# Aplicar configuraciones iniciales
-sudo omv-salt deploy run phpfpm nginx omv-engined
