@@ -16,7 +16,7 @@ sudo npm install -g yarn
 
 # Conexión con base de datos
 sudo apt install -y mysql-client
-mysql -h mysql-gancio.ct54twtvpwmw.us-east-1.rds.amazonaws.com -u carlosfc -p1234567890asd. <<EOF
+mysql -h gancio-rds-mysql.ct54twtvpwmw.us-east-1.rds.amazonaws.com -u carlosfc -p1234567890asd. <<EOF
 CREATE DATABASE IF NOT EXISTS gancio;
 CREATE USER IF NOT EXISTS 'gancio'@'%' IDENTIFIED BY '1234567890asd.';
 GRANT ALL PRIVILEGES ON gancio.* TO 'gancio'@'%';
@@ -57,7 +57,7 @@ sudo tee $GANCIO_FILE > /dev/null << EOF
   "db": {
     "dialect": "mariadb",
     "storage": "",
-    "host": "mysql-gancio.ct54twtvpwmw.us-east-1.rds.amazonaws.com",
+    "host": "gancio-rds-mysql.ct54twtvpwmw.us-east-1.rds.amazonaws.com",
     "database": "gancio",
     "username": "gancio",
     "password": "1234567890asd.",
@@ -87,9 +87,15 @@ sudo apt update
 sudo apt install postfix mailutils -y
 sudo apt install procmail -y
 
-# Instalar Certbot
+# Actualizar repositorios
 sudo apt update 
-sudo apt install postfix -y
+
+# Preconfigurar Postfix para que no muestre la pantalla de configuración
+echo "postfix postfix/main_mailer_type select No configuration" | sudo debconf-set-selections
+echo "postfix postfix/mailname string localhost" | sudo debconf-set-selections
+
+# Evitar prompts durante la instalación
+sudo DEBIAN_FRONTEND=noninteractive apt install -y postfix
 
 echo "gancio-tfg.duckdns.org" | sudo tee /etc/mailname
 

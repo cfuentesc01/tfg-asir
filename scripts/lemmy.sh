@@ -7,13 +7,18 @@ wget --quiet -O - https://www.postgresql.org/media/keys/ACCC4CF8.asc | sudo apt-
 sudo sh -c 'echo "deb http://apt.postgresql.org/pub/repos/apt/ $(lsb_release -cs)-pgdg main" >> /etc/apt/sources.list.d/pgdg.list'
 sudo apt update -y
 sudo apt install libssl-dev libpq-dev postgresql-client -y
-sudo npm install -g yarn
+# Instalar Yarn
+curl -sL https://dl.yarnpkg.com/debian/pubkey.gpg | sudo tee /etc/apt/trusted.gpg.d/yarn.asc
+echo "deb https://dl.yarnpkg.com/debian/ stable main" | sudo tee /etc/apt/sources.list.d/yarn.list
+
+sudo apt update
+sudo apt install yarn -y
 
 # Conectando el RDS de PostgreSQL
-psql -h postgresql-2.ct54twtvpwmw.us-east-1.rds.amazonaws.com -U carlosfc -d postgres
-CREATE USER lemmy WITH PASSWORD '1234567890asd.'
-CREATE DATABASE lemmy;
-ALTER DATABASE lemmy OWNER TO lemmy;
+psql -h lemmy-rds-postgres.ct54twtvpwmw.us-east-1.rds.amazonaws.com -U carlosfc -d postgres
+CREATE USER lemmy WITH PASSWORD '1234567890asd.';
+CREATE DATABASE lemmy WITH OWNER lemmy;
+GRANT ALL PRIVILEGES ON DATABASE lemmy TO lemmy;
 
 # Instalando Rust
 sudo apt install protobuf-compiler gcc -y
@@ -30,7 +35,7 @@ sudo apt install cargo -y
 sudo apt install -y build-essential libpq-dev
 
 # Lemmy backend
-sudo adduser lemmy --system --disabled-login --no-create-home --group
+sudo useradd -m -d /opt/lemmy lemmy
 git clone https://github.com/LemmyNet/lemmy.git lemmy
 cd lemmy
 git checkout 0.18.5
@@ -58,7 +63,7 @@ sudo tee $LEMMY_FILE > /dev/null << EOF
 database: {
   user: "lemmy"
   password: "1234567890asd."
-  host: "lemmy.ct54twtvpwmw.us-east-1.rds.amazonaws.com"
+  host: "lemmy-rds-postgres.ct54twtvpwmw.us-east-1.rds.amazonaws.com"
   port: 5432
   database: "lemmy"
   pool_size: 5
@@ -86,7 +91,7 @@ ExecStart=/opt/lemmy/lemmy-server/lemmy_server
 Environment=LEMMY_CONFIG_LOCATION=/opt/lemmy/lemmy-server/lemmy.hjson
 Environment=PICTRS_ADDR=127.0.0.1:8080
 Environment=RUST_LOG="info"
-Environment=LEMMY_DATABASE_URL=postgres://lemmy:1234567890asd.@lemmy.ct54twtvpwmw.us-east-1.rds.amazonaws.com:5432/lemmy?sslmode=require
+Environment=LEMMY_DATABASE_URL=postgres://lemmy:1234567890asd.@lemmy-rds-postgres.ct54twtvpwmw.us-east-1.rds.amazonaws.com:5432/lemmy?sslmode=require
 Restart=on-failure
 WorkingDirectory=/opt/lemmy
 
@@ -168,7 +173,7 @@ sudo tee /home/ubuntu/rds-lemmy-backup.sh > /dev/null << EOF
 # Requisitos: AWS CLI v2, pg_dump, gzip
 
 # Configuración (¡modifícalo!)
-RDS_ENDPOINT="lemmy.ct54twtvpwmw.us-east-1.rds.amazonaws.com"
+RDS_ENDPOINT="lemmy-rds-postgres.ct54twtvpwmw.us-east-1.rds.amazonaws.com"
 DB_NAME="lemmy"
 DB_USER="carlosfc"
 BACKUP_DIR="/mnt/lemmy_backup"  # Ruta montada de OpenMediaVault

@@ -5,7 +5,7 @@ EMAIL="carlos@gmail.com"
 # Dominio para el certificado
 DOMAIN="gancio-tfg.duckdns.org"
 # Archivo de configuracion
-CONFIG_FILE="/etc/nginx/sites-enabled/gancio.conf"
+CONFIG_FILE="/etc/nginx/sites-available/gancio.conf"
 LINK_FILE="/etc/nginx/sites-enabled/gancio.conf"
 
 # Instalar dependencias
@@ -20,7 +20,7 @@ sudo snap set certbot trust-plugin-with-root=ok
 sudo snap connect certbot:plugin certbot-dns-duckdns
 
 # Ejecuta Certbot con los parámetros necesarios
-#sudo certbot certonly --nginx --email "$EMAIL" --agree-tos --no-eff-email --domain "$DOMAIN"
+sudo certbot certonly --nginx --email "$EMAIL" --agree-tos --no-eff-email --domain "$DOMAIN"
 
 cat > $CONFIG_FILE << EOF
 server {
