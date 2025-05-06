@@ -310,12 +310,20 @@ resource "aws_security_group" "lemmy_sg" {
 
   }
 
-  # Permitir acceso a Lemmy desde las instancias NGINX
+  # Permitir acceso a Lemmy 
   ingress {
     from_port   = 8536
     to_port     = 8536
     protocol    = "tcp"
-    security_groups = [aws_security_group.nginx-1_sg.id]  # Asegúrate de que el SG de NGINX está definido
+    security_groups = ["0.0.0.0/0"]
+  }
+
+  # Permitir acceso a Lemmy 
+  ingress {
+    from_port   = 1234
+    to_port     = 1234
+    protocol    = "tcp"
+    security_groups = ["0.0.0.0/0"]
   }
 
   # Permitir acceso a PostgreSQL solo dentro de la subred privada
@@ -323,7 +331,7 @@ resource "aws_security_group" "lemmy_sg" {
     from_port   = 5432
     to_port     = 5432
     protocol    = "tcp"
-    cidr_blocks = ["10.208.3.0/24"]  # Ajusta a la subred privada correcta
+    cidr_blocks = ["0.0.0.0/0"]  # Ajusta a la subred privada correcta
   }
 
   # Permitir SMB para backups
