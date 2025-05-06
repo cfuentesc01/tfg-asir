@@ -1,27 +1,43 @@
 #!/bin/bash
 
-# Dirección de correo para Certbot
-EMAIL="carlos@gmail.com"
-# Dominio para el certificado
-DOMAIN="lemmy-tfg.duckdns.org"
 # Archivo de configuracion
 CONFIG_FILE="/etc/nginx/sites-enabled/lemmy.conf"
 
-# Instalar dependencias
-sudo apt update && sudo  DEBIAN_FRONTEND=noninteractive apt install nginx-full python3-pip pipx -y
-sudo snap install --classic certbot
-sudo ln -s /snap/bin/certbot /usr/bin/certbot
-pip install certbot-dns-duckdns
-pipx install certbot-dns-duckdns
-sudo snap install --classic certbot
-sudo snap install certbot-dns-duckdns
-sudo snap set certbot trust-plugin-with-root=ok
-sudo snap connect certbot:plugin certbot-dns-duckdns
+# Update and install necessary packages
+apt-get update -y
+apt-get install -y curl certbot
 
-# Ejecuta Certbot con los parámetros necesarios
-#sudo certbot certonly --nginx --email "$EMAIL" --agree-tos --no-eff-email --domain "$DOMAIN"
+# Set up DuckDNS - Update the DuckDNS IP every 5 minutes
+echo "Setting up DuckDNS update script..."
+sudo mkdir -p /opt/duckdns
+sudo cat <<DUCKDNS_SCRIPT > /opt/duckdns/duckdns.sh
+#!/bin/bash
+echo "Updating DuckDNS: lemmy-tfg.duckdns.org"
+curl -k "https://www.duckdns.org/update?domains=lemmy-tfg.duckdns.org&token=ec9561c1-5778-489f-a589-7c4b12291f28&ip=" -o /opt/duckdns/duck.log
+DUCKDNS_SCRIPT
+chmod +x /opt/duckdns/duckdns.sh
+(crontab -l 2>/dev/null; echo "*/5 * * * * /opt/duckdns/duckdns.sh >/dev/null 2>&1") | crontab -
 
-sudo certbot --nginx -d lemmy-tfg.duckdns.org -d omv.lemmy-tfg.duckdns.org
+# Update DuckDNS immediately to set the IP
+echo "Updating DuckDNS IP..."
+/opt/duckdns/duckdns.sh
+sleep 30
+
+# Detiene temporalmente cualquier proceso en el puerto 80 (como Apache o NGINX)
+echo "Stopping any web server using port 80..."
+sudo systemctl stop apache2 2>/dev/null || true
+sudo systemctl stop nginx 2>/dev/null || true
+
+# Obtain SSL certificate in standalone mode (non-interactive)
+echo "Obtaining SSL certificate using certbot..."
+certbot certonly --standalone \
+  --non-interactive \
+  --agree-tos \
+  --email carlos@gmail.com \
+  -d "lemmy-tfg.duckdns.org"
+
+apt-get install nginx -y
+apt install nginx-extras -y
 
 sudo tee $CONFIG_FILE > /dev/null << EOF
 limit_req_zone $binary_remote_addr zone=lemmy-tfg.duckdns.org_ratelimit:10m rate=1r/s;
@@ -70,7 +86,7 @@ server {
 
     # Configuración existente de Lemmy
     location / {
-        proxy_pass http://10.208.3.148:1234;
+        proxy_pass http://10.208.3.50:1234;
         proxy_http_version 1.1;
         proxy_set_header Upgrade $http_upgrade;
         proxy_set_header Connection "upgrade";
@@ -84,7 +100,7 @@ server {
     }
 
     location ~ ^/(api|pictrs|feeds|nodeinfo|.well-known) {
-        proxy_pass http://10.208.3.148:8536;
+        proxy_pass http://10.208.3.50:8536;
         proxy_http_version 1.1;
         proxy_set_header Upgrade $http_upgrade;
         proxy_set_header Connection "upgrade";
@@ -97,7 +113,7 @@ server {
     }
 
     location @handle_redirect {
-        proxy_pass http://10.208.3.148:1234$uri;
+        proxy_pass http://10.208.3.50:1234$uri;
         proxy_set_header Host $host;
         proxy_set_header X-Forwarded-Proto $scheme;
     }
@@ -131,7 +147,7 @@ server {
 
     # Proxy hacia OMV (ajusta la IP privada según tu red)
 location / {
-    proxy_pass http://10.208.3.99:80;  # HTTP, no HTTPS
+    proxy_pass http://10.208.3.60:80;  # HTTP, no HTTPS
     proxy_set_header Host $host;
     proxy_set_header X-Real-IP $remote_addr;
     proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;

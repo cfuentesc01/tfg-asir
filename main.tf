@@ -635,7 +635,7 @@ resource "aws_instance" "lemmy" {
 // Creación de la instancia de Backups con OpenMediaVault
 
 resource "aws_instance" "backups" {
-  ami           = "ami-04b4f1a9cf54c11d0"
+  ami           = "ami-0b8d5b17b11c0c9e4"
   instance_type = "t3.small"
   private_ip    = "10.208.3.60"
   subnet_id     = aws_subnet.private1.id

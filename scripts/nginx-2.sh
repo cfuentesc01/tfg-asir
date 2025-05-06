@@ -8,19 +8,41 @@ DOMAIN="gancio-tfg.duckdns.org"
 CONFIG_FILE="/etc/nginx/sites-available/gancio.conf"
 LINK_FILE="/etc/nginx/sites-enabled/gancio.conf"
 
-# Instalar dependencias
-sudo apt update && sudo  DEBIAN_FRONTEND=noninteractive apt install nginx-full python3-pip pipx -y
-sudo snap install --classic certbot
-sudo ln -s /snap/bin/certbot /usr/bin/certbot
-pip install certbot-dns-duckdns
-pipx install certbot-dns-duckdns
-sudo snap install --classic certbot
-sudo snap install certbot-dns-duckdns
-sudo snap set certbot trust-plugin-with-root=ok
-sudo snap connect certbot:plugin certbot-dns-duckdns
+# Update and install necessary packages
+apt-get update -y
+apt-get install -y curl certbot
 
-# Ejecuta Certbot con los parámetros necesarios
-sudo certbot certonly --nginx --email "$EMAIL" --agree-tos --no-eff-email --domain "$DOMAIN"
+# Set up DuckDNS - Update the DuckDNS IP every 5 minutes
+echo "Setting up DuckDNS update script..."
+sudo mkdir -p /opt/duckdns
+sudo cat <<DUCKDNS_SCRIPT > /opt/duckdns/duckdns.sh
+#!/bin/bash
+echo "Updating DuckDNS: lemmy-tfg.duckdns.org"
+curl -k "https://www.duckdns.org/update?domains=gaancio-tfg.duckdns.org&token=ec9561c1-5778-489f-a589-7c4b12291f28&ip=" -o /opt/duckdns/duck.log
+DUCKDNS_SCRIPT
+chmod +x /opt/duckdns/duckdns.sh
+(crontab -l 2>/dev/null; echo "*/5 * * * * /opt/duckdns/duckdns.sh >/dev/null 2>&1") | crontab -
+
+# Update DuckDNS immediately to set the IP
+echo "Updating DuckDNS IP..."
+/opt/duckdns/duckdns.sh
+sleep 30
+
+# Detiene temporalmente cualquier proceso en el puerto 80 (como Apache o NGINX)
+echo "Stopping any web server using port 80..."
+sudo systemctl stop apache2 2>/dev/null || true
+sudo systemctl stop nginx 2>/dev/null || true
+
+# Obtain SSL certificate in standalone mode (non-interactive)
+echo "Obtaining SSL certificate using certbot..."
+certbot certonly --standalone \
+  --non-interactive \
+  --agree-tos \
+  --email carlos@gmail.com \
+  -d "gancio-tfg.duckdns.org"
+
+apt-get install nginx -y
+apt install nginx-extras -y
 
 sudo tee > $CONFIG_FILE > /dev/null << EOF
 server {
@@ -82,6 +104,3 @@ sudo chown www-data: /var/cache/nginx/gancio
 # Reiniciar Nginx
 sudo systemctl daemon-reload
 sudo systemctl reload nginx
-
-
-
