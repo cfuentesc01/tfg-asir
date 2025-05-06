@@ -126,9 +126,10 @@ sudo apt install nodejs
 
 # pnpm
 sudo npm i -g pnpm
-
+cd /opt/lemmy
 sudo -u lemmy bash
 cd /opt/lemmy
+git clone https://github.com/LemmyNet/lemmy-ui.git --recursive
 git checkout 0.18.5
 yarn add webpack webpack-cli --dev
 yarn install
