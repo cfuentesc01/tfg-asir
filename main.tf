@@ -620,6 +620,8 @@ resource "aws_instance" "lemmy" {
   key_name      = aws_key_pair.ssh_key.key_name
   security_groups = [aws_security_group.lemmy_sg.id]
 
+  # user_data = file("scripts/lemmy.sh") 
+
   tags = {
     Name = "LEMMY-1"
   }
@@ -672,14 +674,18 @@ resource "aws_instance" "gancio" {
   key_name      = aws_key_pair.ssh_key.key_name
   security_groups = [aws_security_group.gancio_sg.id]
 
+  user_data = file("scripts/gancio.sh") 
+
   tags = {
     Name = "GANCIO-1"
   }
+
   root_block_device {
-    volume_size = 30  # Disco duro
+    volume_size = 30
     volume_type = "gp3"
   }
 }
+
 
 // Creación de la instancia de Prometheus con Grafana
 

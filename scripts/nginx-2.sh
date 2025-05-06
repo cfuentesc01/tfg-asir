@@ -22,7 +22,7 @@ sudo snap connect certbot:plugin certbot-dns-duckdns
 # Ejecuta Certbot con los parámetros necesarios
 sudo certbot certonly --nginx --email "$EMAIL" --agree-tos --no-eff-email --domain "$DOMAIN"
 
-cat > $CONFIG_FILE << EOF
+sudo tee > $CONFIG_FILE > /dev/null << EOF
 server {
   listen 80;
   listen [::]:80;

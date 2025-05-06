@@ -10,20 +10,18 @@ sudo apt update
 sudo apt install -y curl gcc g++ make wget libpq-dev
 
 # Instalar Node.js y Yarn package manager
-curl -sL https://deb.nodesource.com/setup_20.x | sudo bash -
+sudo curl -sL https://deb.nodesource.com/setup_20.x | bash -
 sudo apt-get install -y nodejs
 sudo npm install -g yarn
 
 # Conexión con base de datos
 sudo apt install -y mysql-client
-mysql -h gancio-rds-mysql.ct54twtvpwmw.us-east-1.rds.amazonaws.com -u carlosfc -p1234567890asd. <<EOF
+sudo mysql -h ${DB_HOST} -u carlosfc -p1234567890asd. <<EOF
 CREATE DATABASE IF NOT EXISTS gancio;
 CREATE USER IF NOT EXISTS 'gancio'@'%' IDENTIFIED BY '1234567890asd.';
 GRANT ALL PRIVILEGES ON gancio.* TO 'gancio'@'%';
 FLUSH PRIVILEGES;
 EOF
-
-#exit
 
 # Crear usuario para ejecutar Gancio
 sudo adduser --group --system --shell /bin/false --home /opt/gancio gancio
@@ -36,14 +34,15 @@ sudo wget http://gancio.org/gancio.service -O /etc/systemd/system/gancio.service
 sudo systemctl daemon-reload
 sudo systemctl enable gancio
 
-# Arrancar el servicio de gancio (puerto 13120)
+# Arrancar el servicio de gancio
 sudo systemctl daemon-reload
 sudo systemctl start gancio
 sudo systemctl daemon-reload
 
-# Crear el archivo /etc/mailname para evitar el error
-echo "gancio-tfg.duckdns.org" | sudo tee $MAILNAME_FILE
+# Crear archivo mailname
+sudo echo "gancio-tfg.duckdns.org" | tee $MAILNAME_FILE
 
+# Configuración de Gancio con endpoint inyectado
 sudo tee $GANCIO_FILE > /dev/null << EOF
 {
   "baseurl": "https://gancio-tfg.duckdns.org",
@@ -57,7 +56,7 @@ sudo tee $GANCIO_FILE > /dev/null << EOF
   "db": {
     "dialect": "mariadb",
     "storage": "",
-    "host": "gancio-rds-mysql.ct54twtvpwmw.us-east-1.rds.amazonaws.com",
+    "host": "${DB_HOST}",
     "database": "gancio",
     "username": "gancio",
     "password": "1234567890asd.",
@@ -82,89 +81,74 @@ sudo tee $GANCIO_FILE > /dev/null << EOF
 }
 EOF
 
-# Instalar PostFix
+# Instalar Postfix
 sudo apt update
-sudo apt install postfix mailutils -y
-sudo apt install procmail -y
+sudo apt install -y postfix mailutils procmail
 
-# Actualizar repositorios
-sudo apt update 
+# Preconfigurar Postfix
+sudo echo "postfix postfix/main_mailer_type select No configuration" | debconf-set-selections
+sudo echo "postfix postfix/mailname string localhost" | debconf-set-selections
+DEBIAN_FRONTEND=noninteractive apt install -y postfix
 
-# Preconfigurar Postfix para que no muestre la pantalla de configuración
-echo "postfix postfix/main_mailer_type select No configuration" | sudo debconf-set-selections
-echo "postfix postfix/mailname string localhost" | sudo debconf-set-selections
+# Crear archivo mailname
+sudo echo "gancio-tfg.duckdns.org" | tee /etc/mailname
 
-# Evitar prompts durante la instalación
-sudo DEBIAN_FRONTEND=noninteractive apt install -y postfix
-
-echo "gancio-tfg.duckdns.org" | sudo tee /etc/mailname
-
-# Implantar configuracion
-# IMPLANTAR A MANO LOS CERTIFICADOS QUE HAY GUARDADOS
+# Configuración de Postfix (main.cf)
 sudo tee $POSTFIX1_FILE > /dev/null << EOF
-# Configuración básica
-smtpd_banner = $myhostname ESMTP $mail_name (Carlos Fuentes)
+smtpd_banner = \$myhostname ESMTP \$mail_name (Carlos Fuentes)
 biff = no
 append_dot_mydomain = no
 readme_directory = no
 compatibility_level = 3.6
 
-# Identificación del servidor
 myhostname = gancio-tfg.duckdns.org
 mydomain = gancio-tfg.duckdns.org
 myorigin = /etc/mailname
 
-# Destinos y redes
-mydestination = $myhostname, localhost.$mydomain, localhost, $mydomain
+mydestination = \$myhostname, localhost.\$mydomain, localhost, \$mydomain
 relayhost = [smtp.gmail.com]:587
 inet_interfaces = loopback-only
 inet_protocols = all
 
-# Límites y políticas
 mailbox_size_limit = 0
 message_size_limit = 10485760
 smtpd_recipient_restrictions = permit_mynetworks permit_sasl_authenticated reject_unauth_destination
 
-# Configuración TLS/SSL
 smtpd_tls_cert_file = /etc/letsencrypt/live/gancio-tfg.duckdns.org/fullchain.pem
 smtpd_tls_key_file = /etc/letsencrypt/live/gancio-tfg.duckdns.org/privkey.pem
 smtpd_tls_security_level = may
 smtp_tls_security_level = encrypt
 smtp_tls_CApath = /etc/ssl/certs
-smtp_tls_session_cache_database = btree:${data_directory}/smtp_scache
-smtpd_tls_session_cache_database = btree:${data_directory}/smtpd_scache
+smtp_tls_session_cache_database = btree:\${data_directory}/smtp_scache
+smtpd_tls_session_cache_database = btree:\${data_directory}/smtpd_scache
 smtp_address_preference = ipv4
 
-# Autenticación SASL para Gmail
 smtp_sasl_auth_enable = yes
 smtp_sasl_password_maps = hash:/etc/postfix/sasl_passwd
 smtp_sasl_security_options = noanonymous
 smtp_sasl_mechanism_filter = plain
 smtp_sasl_tls_security_options = noanonymous
 
-# Restricciones de relay
 smtpd_relay_restrictions = permit_mynetworks permit_sasl_authenticated defer_unauth_destination
 
-# Aliases y entrega local
 alias_maps = hash:/etc/aliases
 alias_database = hash:/etc/aliases
 recipient_delimiter = +
 
-# Registros y depuración
 debug_peer_level = 2
 debug_peer_list = 127.0.0.1
 mailbox_command = /usr/bin/procmail
 EOF
 
-# Configurar el archivo de contraseñas SASL
-sudo tee $POSTFIX2_FILE > /dev/null << EOF
+# Configurar SASL auth
+tee $POSTFIX2_FILE > /dev/null << EOF
 [smtp.gmail.com]:587    pedrosusto1312@gmail.com:jrcx hhlr htzd gluf
 EOF
+
 sudo postmap /etc/postfix/sasl_passwd
 sudo chmod 600 /etc/postfix/sasl_passwd
-sudo systemctl daemon-reload
 sudo systemctl restart postfix
 sudo systemctl daemon-reload
 
-# Comprobar si funcionó la instalación
+# Mensaje de comprobación
 echo "Mensaje de prueba" | mail -s "Instalación correcta" pedrosusto1312@gmail.com
