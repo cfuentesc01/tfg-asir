@@ -266,6 +266,14 @@ resource "aws_security_group" "nginx-2_sg" {
     cidr_blocks = ["0.0.0.0/0"]
   }
 
+  # Permitir tráfico Prometheus con Grafana
+  ingress {
+    from_port   = 9090
+    to_port     = 9090
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
   # Permitir tráfico SMTP
   ingress {
     from_port   = 587

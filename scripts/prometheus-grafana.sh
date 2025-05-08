@@ -2,6 +2,7 @@
 
 PROMETHEUS_FILE="/etc/prometheus/prometheus.yml"
 PROMETHEUS_SERVICE="/etc/systemd/system/prometheus.service"
+NODE_EXPORTER="/etc/systemd/system/node_exporter.service"
 
 # Cosas previas a la instalación
 sudo apt update
@@ -58,3 +59,59 @@ sudo systemctl daemon-reload
 sudo systemctl start prometheus
 sudo systemctl enable prometheus
 sudo systemctl status prometheus
+
+# Instalando Node Exporter
+sudo useradd -m -s /bin/false node_exporter
+cd
+wget https://github.com/prometheus/node_exporter/releases/download/v1.5.0/node_exporter-1.5.0.linux-amd64.tar.gz
+tar -zxpvf node_exporter-1.5.0.linux-amd64.tar.gz
+cd node_exporter-1.5.0.linux-amd64
+sudo cp node_exporter /usr/local/bin/
+sudo chown -R node_exporter:node_exporter /usr/local/bin/node_exporter
+
+echo "[Unit]
+Description=Prometheus Node Exporter
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+User=node_exporter
+Group=node_exporter
+Type=simple
+ExecStart=/usr/local/bin/node_exporter
+
+[Install]
+WantedBy=multi-user.target" | sudo tee $NODE_EXPORTER > /dev/null
+
+sudo systemctl daemon-reload
+sudo systemctl start node_exporter
+sudo systemctl enable node_exporter
+sudo systemctl status node_exporter
+
+echo "# Global config
+global:
+  scrape_interval:     15s
+  evaluation_interval: 15s
+  scrape_timeout: 15s
+scrape_configs:
+  - job_name: 'prometheus'
+    static_configs:
+    - targets: ['localhost:9090']
+  - job_name: 'node_exporter'
+    static_configs:
+    - targets: ['localhost:9100']" | sudo tee $PROMETHEUS_FILE > /dev/null
+
+sudo systemctl restart prometheus.service
+
+
+# Instalación de Grafana
+cd
+sudo apt-get install -y apt-transport-https software-properties-common wget
+sudo mkdir -p /etc/apt/keyrings/
+wget -q -O - https://apt.grafana.com/gpg.key | gpg --dearmor | sudo tee /etc/apt/keyrings/grafana.gpg > /dev/null
+echo "deb [signed-by=/etc/apt/keyrings/grafana.gpg] https://apt.grafana.com stable main" | sudo tee -a /etc/apt/sources.list.d/grafana.list
+sudo apt-get update
+sudo apt-get install grafana
+
+sudo systemctl start grafana-server
+sudo systemctl enable grafana-server
