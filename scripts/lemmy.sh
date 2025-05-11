@@ -1,5 +1,8 @@
 #!/bin/bash
 
+# Variable RDS
+DB_HOST=$(terraform output -raw rds_postgres_lemmy_endpoint)
+
 # Instalando dependencias
 sudo apt update
 sudo apt install -y wget ca-certificates pkg-config
@@ -13,12 +16,14 @@ echo "deb https://dl.yarnpkg.com/debian/ stable main" | sudo tee /etc/apt/source
 
 sudo apt update
 sudo apt install yarn -y
+sudo apt install -y postgresql-client
 
-# Conectando el RDS de PostgreSQL
-psql -h lemmy-rds-postgres.ct54twtvpwmw.us-east-1.rds.amazonaws.com -U carlosfc -d postgres
+# Ejecutar comandos en PostgreSQL
+PGPASSWORD="1234567890asd." psql -h "$DB_HOST" -U carlosfc -d postgres <<EOF
 CREATE USER lemmy WITH PASSWORD '1234567890asd.';
 CREATE DATABASE lemmy WITH OWNER lemmy;
 GRANT ALL PRIVILEGES ON DATABASE lemmy TO lemmy;
+EOF
 
 # Instalando Rust
 sudo apt install protobuf-compiler gcc -y

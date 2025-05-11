@@ -606,6 +606,8 @@ resource "aws_instance" "nginx_1" {
   key_name      = aws_key_pair.ssh_key.key_name
   vpc_security_group_ids = [aws_security_group.nginx-1_sg.id]
 
+  user_data = file("scripts/nginx-1.sh") 
+
   tags = {
     Name = "NGINX-1"
   }
@@ -621,6 +623,9 @@ resource "aws_instance" "nginx_2" {
   subnet_id     = aws_subnet.public2.id
   key_name      = aws_key_pair.ssh_key.key_name
   security_groups = [aws_security_group.nginx-2_sg.id]
+
+  user_data = file("scripts/nginx-2.sh") 
+
   tags = {
     Name = "NGINX-2"
   }
@@ -636,7 +641,7 @@ resource "aws_instance" "lemmy" {
   key_name      = aws_key_pair.ssh_key.key_name
   security_groups = [aws_security_group.lemmy_sg.id]
 
-  # user_data = file("scripts/lemmy.sh") 
+  user_data = file("scripts/lemmy.sh") 
 
   tags = {
     Name = "LEMMY-1"
@@ -657,6 +662,8 @@ resource "aws_instance" "backups" {
   subnet_id     = aws_subnet.private1.id
   key_name      = aws_key_pair.ssh_key.key_name
   security_groups = [aws_security_group.backups_sg.id]
+
+  user_data = file("scripts/openmediavault.sh")
 
   tags = {
     Name = "BACKUPS"
@@ -800,4 +807,16 @@ resource "aws_security_group" "rds_sg_gancio" {
     protocol    = "tcp"
     cidr_blocks = ["10.208.0.0/16"]  # Permitir conexiones dentro de la VPC
   }
+}
+
+# Variables de los puntos de enlace de los RDS
+
+# Punto de enlace del RDS de MySQL de Gancio
+output "rds_mysql_gancio_endpoint" {
+  value = aws_db_instance.rds_mysql_gancio.endpoint
+}
+
+# Punto de enlace del RDS de PostgreSQL de Lemmy
+output "rds_postgres_lemmy_endpoint" {
+  value = aws_db_instance.rds_postgres_lemmy.endpoint
 }
