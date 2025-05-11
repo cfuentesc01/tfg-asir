@@ -720,6 +720,8 @@ resource "aws_instance" "prometheus" {
   key_name      = aws_key_pair.ssh_key.key_name
   security_groups = [aws_security_group.prometheus_sg.id]
 
+#user_data = file("scripts/prometheus-grafana.sh") 
+
   tags = {
     Name = "PROMETHEUS"
   }
