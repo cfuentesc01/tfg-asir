@@ -323,7 +323,7 @@ resource "aws_security_group" "lemmy_sg" {
     from_port   = 8536
     to_port     = 8536
     protocol    = "tcp"
-    security_groups = ["0.0.0.0/0"]
+    cidr_blocks = ["0.0.0.0/0"]
   }
 
   # Permitir acceso a Lemmy 
@@ -331,7 +331,7 @@ resource "aws_security_group" "lemmy_sg" {
     from_port   = 1234
     to_port     = 1234
     protocol    = "tcp"
-    security_groups = ["0.0.0.0/0"]
+    cidr_blocks = ["0.0.0.0/0"]
   }
 
   # Permitir acceso a PostgreSQL solo dentro de la subred privada
@@ -656,7 +656,7 @@ resource "aws_instance" "lemmy" {
 // Creación de la instancia de Backups con OpenMediaVault
 
 resource "aws_instance" "backups" {
-  ami           = "ami-0b8d5b17b11c0c9e4"
+  ami           = "ami-07d9b9ddc6cd8dd30"
   instance_type = "t3.small"
   private_ip    = "10.208.3.60"
   subnet_id     = aws_subnet.private1.id
