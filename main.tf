@@ -622,6 +622,15 @@ resource "aws_security_group" "backups_sg" {
     description = "Acceso a PostgreSQL RDS desde Backups"
   }
 
+  # Permitir conexión HTTP
+  ingress {
+    from_port   = 80
+    to_port     = 80
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+    description = "Acceso HTTP"
+  }
+
   # Reglas de salida: permitir tráfico saliente a cualquier destino
   egress {
     from_port   = 0
