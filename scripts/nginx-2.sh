@@ -92,7 +92,7 @@ server {
 }
 EOF
 
-sudo ln -s $CONFIG_FILE $LINK_FILE
+#sudo ln -s $CONFIG_FILE $LINK_FILE
 
 # Optimización
 sudo mkdir -p /var/cache/nginx/gancio
