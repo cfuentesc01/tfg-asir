@@ -29,7 +29,7 @@ EOF
 sudo adduser --group --system --shell /bin/false --home /opt/gancio gancio
 
 # Instalar Gancio
-sudo yarn global add --network-timeout 1000000000 --silent https://gancio.org/releases/gancio-v1.19.5.tgz
+sudo yarn global add --network-timeout 1000000000 --silent https://gancio.org/releases/gancio-v1.6.2.tgz
 
 # Instalar systemd service y reload systemd
 sudo wget http://gancio.org/gancio.service -O /etc/systemd/system/gancio.service
