@@ -29,7 +29,7 @@ EOF
 sudo adduser --group --system --shell /bin/false --home /opt/gancio gancio
 
 # Instalar Gancio
-sudo yarn global add --network-timeout 1000000000 --silent https://gancio.org/releases/gancio-v1.21.0.tgz
+sudo yarn global add --network-timeout 1000000000 --silent https://gancio.org/releases/gancio-v1.19.5.tgz
 
 # Instalar systemd service y reload systemd
 sudo wget http://gancio.org/gancio.service -O /etc/systemd/system/gancio.service
@@ -45,43 +45,43 @@ sudo systemctl daemon-reload
 sudo echo "gancio-tfg.duckdns.org" | tee $MAILNAME_FILE
 
 # Configuración de Gancio con endpoint inyectado
-sudo tee $GANCIO_FILE > /dev/null << EOF
-{
-  "baseurl": "https://gancio-tfg.duckdns.org",
-  "hostname": "gancio-tfg.duckdns.org",
-  "server": {
-    "host": "0.0.0.0",
-    "port": 13120
-  },
-  "log_level": "debug",
-  "log_path": "/opt/gancio/logs",
-  "db": {
-    "dialect": "mariadb",
-    "storage": "",
-    "host": "${DB_HOST}",
-    "database": "gancio",
-    "username": "gancio",
-    "password": "1234567890asd.",
-    "logging": false,
-    "dialectOptions": {
-      "autoJsonMap": true
-    }
-  },
-  "user_locale": "/opt/gancio/user_locale",
-  "upload_path": "/opt/gancio/uploads",
-  "proxy": {
-    "protocol": "",
-    "hostname": "",
-    "host": "",
-    "port": "",
-    "auth": {
-      "username": "",
-      "password": ""
-    },
-    "headers": {}
-  }
-}
-EOF
+#sudo tee $GANCIO_FILE > /dev/null << EOF
+#{
+#  "baseurl": "https://gancio-tfg.duckdns.org",
+#  "hostname": "gancio-tfg.duckdns.org",
+#  "server": {
+#    "host": "0.0.0.0",
+#    "port": 13120
+#  },
+#  "log_level": "debug",
+#  "log_path": "/opt/gancio/logs",
+#  "db": {
+#    "dialect": "mariadb",
+#    "storage": "",
+#    "host": "${DB_HOST}",
+#    "database": "gancio",
+#    "username": "gancio",
+#    "password": "1234567890asd.",
+#    "logging": false,
+#    "dialectOptions": {
+#     "autoJsonMap": true
+#    }
+#  },
+#  "user_locale": "/opt/gancio/user_locale",
+#  "upload_path": "/opt/gancio/uploads",
+#  "proxy": {
+#    "protocol": "",
+#    "hostname": "",
+#    "host": "",
+#    "port": "",
+#    "auth": {
+#      "username": "",
+#      "password": ""
+#    },
+#    "headers": {}
+#  }
+#}
+#EOF
 
 # Instalar Postfix
 sudo apt update
