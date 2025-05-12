@@ -86,10 +86,26 @@ sudo systemctl enable node_exporter
 sudo systemctl start node_exporter
 
 # Añadimos el servidor de Prometheus
-sudo tee /etc/prometheus.yml > /dev/null << EOF
-- job_name: 'node_exporter'
-  static_configs:
-    - targets:
+sudo tee /etc/prometheus/prometheus.yml > /dev/null << EOF
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets: []
+
+rule_files: []
+
+scrape_configs:
+  - job_name: "prometheus"
+    static_configs:
+      - targets: ["localhost:9090"]
+
+  - job_name: 'node_exporter'
+    static_configs:
+      - targets:
         - '10.208.3.60:9100'
         - '10.208.4.70:9100'
         - '10.208.3.50:9100'
