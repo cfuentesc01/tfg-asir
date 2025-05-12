@@ -24,15 +24,20 @@ export LANG=C.UTF-8
 export DEBIAN_FRONTEND=noninteractive
 export APT_LISTCHANGES_FRONTEND=none
 
+export DEBIAN_FRONTEND=noninteractive
+
 sudo apt-get update
-sudo apt-get --yes --auto-remove --show-upgraded \
+
+sudo apt-get install -y --auto-remove --show-upgraded \
     --allow-downgrades --allow-change-held-packages \
     --no-install-recommends \
-    --option DPkg::Options::="--force-confdef" \
-    --option DPkg::Options::="--force-confold" \
-    install openmediavault
+    --option Dpkg::Options::="--force-confdef" \
+    --option Dpkg::Options::="--force-confold" \
+    openmediavault
 
+# Ejecutar el comando final automáticamente
 sudo omv-confdbadm populate
+
 
 # Monitorización
 sudo useradd --no-create-home --shell /bin/false prometheus
