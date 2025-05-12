@@ -382,14 +382,6 @@ resource "aws_security_group" "lemmy_sg" {
     cidr_blocks = ["0.0.0.0/0"]
   }
 
-  # Permitir tráfico Prometheus
-  ingress {
-    from_port   = 9100
-    to_port     = 9100
-    protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
-
   # Salida permitida a cualquier destino (Internet vía NAT Gateway)
   egress {
     from_port   = 0
@@ -473,14 +465,6 @@ resource "aws_security_group" "gancio_sg" {
     cidr_blocks = ["0.0.0.0/0"]
   }
 
-  # Permitir que Prometheus acceda a Gancio para monitorización (puerto 9100)
-  ingress {
-    from_port   = 9100
-    to_port     = 9100
-    protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]  # Toda la VPC puede monitorizar
-  }
-
   # Permitir tráfico Prometheus
   ingress {
     from_port   = 9100
@@ -532,14 +516,6 @@ resource "aws_security_group" "prometheus_sg" {
     to_port     = 9100
     protocol    = "tcp"
     cidr_blocks = ["0.0.0.0/0"]
-  }
-
-  # Permitir recepción de métricas desde cualquier instancia de la VPC
-  ingress {
-    from_port   = 9090
-    to_port     = 9090
-    protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]  # Toda la VPC puede enviar métricas
   }
 
   # Permitir acceso a la interfaz web de Grafana (3000) desde cualquier instancia de la VPC
@@ -719,7 +695,7 @@ resource "aws_instance" "backups" {
   key_name      = aws_key_pair.ssh_key.key_name
   security_groups = [aws_security_group.backups_sg.id]
 
-  user_data = file("scripts/openmediavault.sh")
+  #user_data = file("scripts/openmediavault.sh")
 
   tags = {
     Name = "BACKUPS"
