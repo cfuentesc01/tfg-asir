@@ -205,6 +205,14 @@ resource "aws_security_group" "nginx-1_sg" {
     cidr_blocks = ["0.0.0.0/0"]
   }
 
+  # Permitir tráfico Prometheus
+  ingress {
+    from_port   = 9100
+    to_port     = 9100
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
   # Permitir acceso HTTPS a la interfaz web de OpenMediaVault
   ingress {
     from_port   = 8443
@@ -262,6 +270,22 @@ resource "aws_security_group" "nginx-2_sg" {
   ingress {
     from_port   = 13120
     to_port     = 13120
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  # Permitir tráfico Prometheus
+  ingress {
+    from_port   = 3000
+    to_port     = 3000
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  # Permitir tráfico Prometheus
+  ingress {
+    from_port   = 9100
+    to_port     = 9100
     protocol    = "tcp"
     cidr_blocks = ["0.0.0.0/0"]
   }
@@ -351,6 +375,14 @@ resource "aws_security_group" "lemmy_sg" {
   }
 
   # Permitir que Prometheus acceda a Gancio para monitorización (puerto 9100)
+  ingress {
+    from_port   = 9100
+    to_port     = 9100
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  # Permitir tráfico Prometheus
   ingress {
     from_port   = 9100
     to_port     = 9100
@@ -449,6 +481,14 @@ resource "aws_security_group" "gancio_sg" {
     cidr_blocks = ["0.0.0.0/0"]  # Toda la VPC puede monitorizar
   }
 
+  # Permitir tráfico Prometheus
+  ingress {
+    from_port   = 9100
+    to_port     = 9100
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
   # Permitir salida a Internet 
   egress {
     from_port   = 0
@@ -484,6 +524,14 @@ resource "aws_security_group" "prometheus_sg" {
     to_port     = 9090
     protocol    = "tcp"
     cidr_blocks = ["0.0.0.0/0"]  # Toda la VPC puede acceder a Prometheus
+  }
+
+  # Permitir tráfico Prometheus
+  ingress {
+    from_port   = 9100
+    to_port     = 9100
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
   }
 
   # Permitir recepción de métricas desde cualquier instancia de la VPC
@@ -556,6 +604,14 @@ resource "aws_security_group" "backups_sg" {
     protocol    = "tcp"
     cidr_blocks = ["0.0.0.0/0"]
     description = "Acceso a MySQL RDS desde Backups"
+  }
+
+  # Permitir tráfico Prometheus
+  ingress {
+    from_port   = 9100
+    to_port     = 9100
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
   }
 
   # Permitir SMB para backups

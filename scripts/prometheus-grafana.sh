@@ -1,40 +1,28 @@
 #!/bin/bash
 
-PROMETHEUS_FILE="/etc/prometheus/prometheus.yml"
-PROMETHEUS_SERVICE="/etc/systemd/system/prometheus.service"
-NODE_EXPORTER="/etc/systemd/system/node_exporter.service"
-
-# Cosas previas a la instalación
-sudo apt update
-sudo useradd --no-create-home --shell /bin/false prometheus
-sudo mkdir -p /etc/prometheus
+# Instalación de Prometheus
+sudo wget https://github.com/prometheus/prometheus/releases/download/v2.39.1/prometheus-2.39.1.linux-amd64.tar.gz
+sudo tar -xzf prometheus-*linux-amd64.tar.gz
+sudo mv prometheus-*linux-amd64 prometheus
 sudo mkdir -p /var/lib/prometheus
-sudo chown -R prometheus:prometheus /etc/prometheus /var/lib/prometheus
+sudo mkdir -p /etc/prometheus
+sudo cp prometheus/prometheus.yml /etc/prometheus
+sudo mv prometheus/prometheus prometheus/promtool /usr/local/bin/
+sudo mv prometheus/consoles/ prometheus/console_libraries/ /etc/prometheus/
 
-# Instalar Prometheus
-wget https://github.com/prometheus/prometheus/releases/download/v3.3.0-rc.0/prometheus-3.3.0-rc.0.linux-amd64.tar.gz
-tar -zxvf prometheus-3.3.0-rc.0.linux-amd64.tar.gz
-cd prometheus-3.3.0-rc.0.linux-amd64/
-sudo cp promtool /usr/local/bin
-sudo cp prometheus /usr/local/bin
+# Creación del usuario
+sudo useradd --no-create-home --shell /bin/false prometheus
+sudo chown -R prometheus:prometheus /opt/node_exporter
 
-# Crear el archivo de configuración de Prometheus con contenido directamente
-echo "# Configuración Global.
-global:
-  scrape_interval: 15s 
-  evaluation_interval: 15s
-  scrape_timeout: 15s  
-scrape_configs:
-  - job_name: 'prometheus'
-    static_configs:
-    - targets: ['localhost:9090'] #Solo realizara el monitoreo del servidor local." | sudo tee $PROMETHEUS_FILE > /dev/null
+sudo chown prometheus:prometheus /etc/prometheus
+sudo chown prometheus:prometheus /var/lib/prometheus
+sudo chown -R prometheus:prometheus /etc/prometheus/consoles
+sudo chown -R prometheus:prometheus /etc/prometheus/console_libraries
 
-# Cambiar propiedad y permisos para que prometheus pueda escribir en el archivo
-sudo chown prometheus:prometheus $PROMETHEUS_FILE
-
-# Crear el servicio de Prometheus con contenido directamente
-echo "[Unit]
-Description=Prometheus
+# Configurar servicio de Prometheus
+sudo tee > /etc/apt/sources.list.d/grafana.list > /dev/null << EOF
+[Unit]
+Description=Prometheus Server
 Wants=network-online.target
 After=network-online.target
 
@@ -42,76 +30,73 @@ After=network-online.target
 User=prometheus
 Group=prometheus
 Type=simple
-ExecStart=/usr/local/bin/prometheus \
-  --config.file=/etc/prometheus/prometheus.yml \
-  --storage.tsdb.path=/var/lib/prometheus/ \
-  --web.console.templates=/etc/prometheus/consoles \
-  --web.console.libraries=/etc/prometheus/console_libraries
+ExecStart= /usr/local/bin/prometheus \
+--config.file /etc/prometheus/prometheus.yml \
+--storage.tsdb.path /var/lib/prometheus/ \
+--web.console.templates=/etc/prometheus/consoles \
+--web.console.libraries=/etc/prometheus/console_libraries
 
 [Install]
-WantedBy=multi-user.target" | sudo tee $PROMETHEUS_SERVICE > /dev/null
+WantedBy=multi-user.target
+EOF
 
-# Cambiar propiedad y permisos para que prometheus pueda leer el archivo del servicio
-sudo chown root:root $PROMETHEUS_SERVICE
-
-# Inicializando servicio
 sudo systemctl daemon-reload
-sudo systemctl start prometheus
-sudo systemctl enable prometheus
-sudo systemctl status prometheus
+sudo systemctl start prometheus.service
+sudo systemctl enable prometheus.service
 
-# Instalando Node Exporter
-sudo useradd -m -s /bin/false node_exporter
-cd
-wget https://github.com/prometheus/node_exporter/releases/download/v1.5.0/node_exporter-1.5.0.linux-amd64.tar.gz
-tar -zxpvf node_exporter-1.5.0.linux-amd64.tar.gz
-cd node_exporter-1.5.0.linux-amd64
-sudo cp node_exporter /usr/local/bin/
-sudo chown -R node_exporter:node_exporter /usr/local/bin/node_exporter
+# Instalación de Grafana (puerto 3000)
+apt install apt-transport-https software-properties-common wget
+wget -q -O - https://packages.grafana.com/gpg.key | sudo apt-key add -
 
-echo "[Unit]
-Description=Prometheus Node Exporter
+sudo tee > /etc/apt/sources.list.d/grafana.list > /dev/null << EOF
+deb https://packages.grafana.com/oss/deb stable main
+EOF
+
+sudo apt update
+sudo apt install grafana -y
+sudo systemctl start grafana-server
+sudo systemctl enable grafana-server
+
+# Instalación de Node Exporter
+sudo wget https://github.com/prometheus/node_exporter/releases/download/v1.3.0/node_exporter-1.3.0.linux-amd64.tar.gz -P /opt
+sudo tar -xvf /opt/node_exporter-1.3.0.linux-amd64.tar.gz
+sudo mv node_exporter-1.3.0.linux-amd64/ /opt/node_exporter
+
+# Creación del servicio
+sudo tee /etc/systemd/system/node_exporter.service > /dev/null << EOF
+[Unit]
+Description=node_exporter
 Wants=network-online.target
 After=network-online.target
 
 [Service]
-User=node_exporter
-Group=node_exporter
+User=prometheus
+Group=prometheus
 Type=simple
-ExecStart=/usr/local/bin/node_exporter
+ExecStart=/opt/node_exporter/node_exporter
 
 [Install]
-WantedBy=multi-user.target" | sudo tee $NODE_EXPORTER > /dev/null
+WantedBy=multi-user.target
+EOF
 
 sudo systemctl daemon-reload
-sudo systemctl start node_exporter
+sudo systemctl daemon-reexec
+sudo systemctl daemon-reload
 sudo systemctl enable node_exporter
-sudo systemctl status node_exporter
+sudo systemctl start node_exporter
 
-echo "# Global config
-global:
-  scrape_interval:     15s
-  evaluation_interval: 15s
-  scrape_timeout: 15s
-scrape_configs:
-  - job_name: 'prometheus'
-    static_configs:
-    - targets: ['localhost:9090']
-  - job_name: 'node_exporter'
-    static_configs:
-    - targets: ['localhost:9100']" | sudo tee $PROMETHEUS_FILE > /dev/null
+# Añadimos el servidor de Prometheus
+sudo tee /etc/prometheus.yml > /dev/null << EOF
+- job_name: 'node_exporter'
+  static_configs:
+    - targets:
+        - '10.208.3.60:9100'
+        - '10.208.4.70:9100'
+        - '10.208.3.50:9100'
+        - '10.208.1.100:9100'
+        - '10.208.2.100:9100'
+        - '10.208.4.80:9100'
+EOF
 
-sudo systemctl restart prometheus.service
-
-
-# Instalación de Grafana
-cd
-sudo apt-get install -y apt-transport-https software-properties-common wget
-sudo mkdir -p /etc/apt/keyrings/
-wget -q -O - https://apt.grafana.com/gpg.key | gpg --dearmor | sudo tee /etc/apt/keyrings/grafana.gpg > /dev/null
-echo "deb [signed-by=/etc/apt/keyrings/grafana.gpg] https://apt.grafana.com stable main" | sudo tee -a /etc/apt/sources.list.d/grafana.list
-sudo apt-get update
-sudo apt-get install grafana
-
-sudo systemctl start grafana-server
-sudo systemctl enable grafana-server
+sudo systemctl stop prometheus
+sudo systemctl start prometheus
