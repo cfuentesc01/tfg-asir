@@ -720,6 +720,7 @@ resource "aws_instance" "backups" {
   security_groups = [aws_security_group.backups_sg.id]
 
   #user_data = file("scripts/openmediavault.sh")
+  #user_data = file("scripts/raid.sh")
 
   tags = {
     Name = "BACKUPS"
