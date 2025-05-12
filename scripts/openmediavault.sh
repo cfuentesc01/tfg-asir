@@ -8,18 +8,13 @@ sudo wget --quiet --output-document=- https://packages.openmediavault.org/public
 # Contraseña a admin
 echo 'admin:1234567890asd.' | sudo chpasswd
 
+# Preconfigurar la instalación de Postfix para que no muestre el menú
+echo "postfix postfix/mailname string lemmy-tfg.duckdns.org" | sudo debconf-set-selections
+echo "postfix postfix/main_mailer_type string 'Internet Site'" | sudo debconf-set-selections
+
 # Añadiendo repositorios
 sudo tee /etc/apt/sources.list.d/openmediavault.list > /dev/null << EOF
 deb [signed-by=/usr/share/keyrings/openmediavault-archive-keyring.gpg] https://packages.openmediavault.org/public sandworm main
-# deb [signed-by=/usr/share/keyrings/openmediavault-archive-keyring.gpg] https://downloads.sourceforge.net/project/openmediavault/packages sandworm main
-## Uncomment the following line to add software from the proposed repository.
-# deb [signed-by=/usr/share/keyrings/openmediavault-archive-keyring.gpg] https://packages.openmediavault.org/public sandworm-proposed main
-# deb [signed-by=/usr/share/keyrings/openmediavault-archive-keyring.gpg] https://downloads.sourceforge.net/project/openmediavault/packages sandworm-proposed main
-## This software is not part of OpenMediaVault, but is offered by third-party
-## developers as a service to OpenMediaVault users.
-# deb [signed-by=/usr/share/keyrings/openmediavault-archive-keyring.gpg] https://packages.openmediavault.org/public sandworm partner
-# deb [signed-by=/usr/share/keyrings/openmediavault-archive-keyring.gpg] https://downloads.sourceforge.net/project/openmediavault/packages sandworm partner
-
 EOF
 
 # Instalando OpenMediaVault
@@ -44,6 +39,7 @@ sudo omv-confdbadm populate
 # Monitorización
 sudo useradd --no-create-home --shell /bin/false prometheus
 sudo chown -R prometheus:prometheus /opt/node_exporter
+
 # Instalación de Node Exporter
 sudo wget https://github.com/prometheus/node_exporter/releases/download/v1.3.0/node_exporter-1.3.0.linux-amd64.tar.gz -P /opt
 sudo tar -xvf /opt/node_exporter-1.3.0.linux-amd64.tar.gz

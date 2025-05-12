@@ -48,9 +48,7 @@ sudo systemctl enable prometheus.service
 sudo apt install -y apt-transport-https software-properties-common wget
 wget -q -O - https://packages.grafana.com/gpg.key | sudo apt-key add -
 
-sudo tee > /etc/apt/sources.list.d/grafana.list > /dev/null << EOF
-deb https://packages.grafana.com/oss/deb stable main
-EOF
+echo "deb https://packages.grafana.com/oss/deb stable main" | sudo tee /etc/apt/sources.list.d/grafana.list > /dev/null
 
 sudo apt update
 sudo apt install grafana -y
@@ -79,11 +77,11 @@ ExecStart=/opt/node_exporter/node_exporter
 WantedBy=multi-user.target
 EOF
 
-  sudo systemctl daemon-reload
-  sudo systemctl daemon-reexec
-  sudo systemctl daemon-reload
-  sudo systemctl enable node_exporter
-  sudo systemctl start node_exporter
+sudo systemctl daemon-reload
+sudo systemctl daemon-reexec
+sudo systemctl daemon-reload
+sudo systemctl enable node_exporter
+sudo systemctl start node_exporter
 
 # Añadimos el servidor de Prometheus
 sudo tee /etc/prometheus/prometheus.yml > /dev/null << EOF
