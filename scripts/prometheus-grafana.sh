@@ -20,7 +20,7 @@ sudo chown -R prometheus:prometheus /etc/prometheus/consoles
 sudo chown -R prometheus:prometheus /etc/prometheus/console_libraries
 
 # Configurar servicio de Prometheus
-sudo tee > /etc/apt/sources.list.d/grafana.list > /dev/null << EOF
+sudo tee > /etc/systemd/system/prometheus.service > /dev/null << EOF
 [Unit]
 Description=Prometheus Server
 Wants=network-online.target

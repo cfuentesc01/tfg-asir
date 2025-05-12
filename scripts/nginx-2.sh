@@ -17,8 +17,8 @@ echo "Setting up DuckDNS update script..."
 sudo mkdir -p /opt/duckdns
 sudo cat <<DUCKDNS_SCRIPT > /opt/duckdns/duckdns.sh
 #!/bin/bash
-echo "Updating DuckDNS: lemmy-tfg.duckdns.org"
-curl -k "https://www.duckdns.org/update?domains=gaancio-tfg.duckdns.org&token=ec9561c1-5778-489f-a589-7c4b12291f28&ip=" -o /opt/duckdns/duck.log
+echo "Updating DuckDNS: gancio-tfg.duckdns.org"
+curl -k "https://www.duckdns.org/update?domains=gancio-tfg.duckdns.org&token=ec9561c1-5778-489f-a589-7c4b12291f28&ip=" -o /opt/duckdns/duck.log
 DUCKDNS_SCRIPT
 chmod +x /opt/duckdns/duckdns.sh
 (crontab -l 2>/dev/null; echo "*/5 * * * * /opt/duckdns/duckdns.sh >/dev/null 2>&1") | crontab -
