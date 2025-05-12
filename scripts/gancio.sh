@@ -4,7 +4,7 @@ GANCIO_FILE="/opt/gancio/config.json"
 POSTFIX1_FILE="/etc/postfix/main.cf"
 POSTFIX2_FILE="/etc/postfix/sasl_passwd"
 MAILNAME_FILE="/etc/mailname"
-DB_HOST=$(terraform output -raw rds_mysql_gancio_endpoint)
+DB_HOST=$(terraform output -raw rds_mysql_gancio_host)
 
 # Instalar dependencias
 sudo apt update

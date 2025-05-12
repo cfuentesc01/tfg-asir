@@ -814,11 +814,11 @@ resource "aws_security_group" "rds_sg_gancio" {
 # Variables de los puntos de enlace de los RDS
 
 # Punto de enlace del RDS de MySQL de Gancio
-output "rds_mysql_gancio_endpoint" {
-  value = aws_db_instance.rds_mysql_gancio.endpoint
+output "rds_mysql_gancio_host" {
+  value = aws_db_instance.rds_mysql_gancio.address
 }
 
 # Punto de enlace del RDS de PostgreSQL de Lemmy
-output "rds_postgres_lemmy_endpoint" {
-  value = aws_db_instance.rds_postgres_lemmy.endpoint
+output "rds_postgres_lemmy_host" {
+  value = aws_db_instance.rds_postgres_lemmy.address
 }
