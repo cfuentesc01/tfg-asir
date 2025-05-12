@@ -127,7 +127,7 @@ curl -fsSL https://deb.nodesource.com/gpgkey/nodesource-repo.gpg.key | sudo gpg 
 echo "deb [signed-by=/etc/apt/keyrings/nodesource.gpg] https://deb.nodesource.com/node_20.x nodistro main" | sudo tee /etc/apt/sources.list.d/nodesource.list
 
 sudo apt update
-sudo apt install nodejs
+sudo apt install nodejs -y
 
 # pnpm
 sudo npm i -g pnpm
@@ -135,6 +135,7 @@ cd /opt/lemmy
 sudo -u lemmy bash
 cd /opt/lemmy
 git clone https://github.com/LemmyNet/lemmy-ui.git --recursive
+cd /opt/lemmy/lemmy-ui
 git checkout 0.18.5
 yarn add webpack webpack-cli --dev
 yarn install

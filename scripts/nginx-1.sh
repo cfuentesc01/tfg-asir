@@ -40,7 +40,7 @@ apt-get install nginx -y
 apt install nginx-extras -y
 
 sudo tee $CONFIG_FILE > /dev/null << EOF
-limit_req_zone $binary_remote_addr zone=lemmy-tfg.duckdns.org_ratelimit:10m rate=1r/s;
+limit_req_zone $binary_remote_addr zone=lemmy_ratelimit:10m rate=1r/s;
 
 # Redirección HTTP -> HTTPS para Lemmy y OMV
 server {
@@ -57,7 +57,7 @@ server {
     }
 }
 
-# Configuración de Lemmy (existente)
+# Configuración de Lemmy
 server {
     listen 443 ssl http2;
     listen [::]:443 ssl http2;
@@ -66,7 +66,6 @@ server {
     ssl_certificate /etc/letsencrypt/live/lemmy-tfg.duckdns.org/fullchain.pem;
     ssl_certificate_key /etc/letsencrypt/live/lemmy-tfg.duckdns.org/privkey.pem;
 
-    # ... (Tus ajustes actuales de TLS y headers de seguridad)
     ssl_protocols TLSv1.2 TLSv1.3;
     ssl_prefer_server_ciphers on;
     ssl_ciphers 'ECDHE-ECDSA-AES256-GCM-SHA384:ECDHE-RSA-AES256-GCM-SHA384:ECDHE-ECDSA-CHACHA20-POLY1305:ECDHE-RSA-CHACHA20-POLY1305:ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES128-GCM-SHA256';
@@ -84,7 +83,6 @@ server {
 
     client_max_body_size 20M;
 
-    # Configuración existente de Lemmy
     location / {
         proxy_pass http://10.208.3.50:1234;
         proxy_http_version 1.1;
@@ -109,27 +107,25 @@ server {
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
         proxy_set_header X-Forwarded-Proto $scheme;
 
-        limit_req zone=lemmy-tfg.duckdns.org_ratelimit burst=30 nodelay;
+        limit_req zone=lemmy_ratelimit burst=30 nodelay;
     }
 
     location @handle_redirect {
-        proxy_pass http://10.208.3.50:1234$uri;
+        proxy_pass http://10.208.3.50:1234;
         proxy_set_header Host $host;
         proxy_set_header X-Forwarded-Proto $scheme;
     }
 }
 
-# Configuración de OpenMediaVault (nuevo bloque server)
+# Configuración de OpenMediaVault
 server {
     listen 8443 ssl http2;
     listen [::]:8443 ssl http2;
-    server_name omv.lemmy-tfg.duckdns.org;  # Subdominio dedicado
+    server_name omv.lemmy-tfg.duckdns.org;
 
-    # Reutiliza el mismo certificado Wildcard de DuckDNS
     ssl_certificate /etc/letsencrypt/live/lemmy-tfg.duckdns.org/fullchain.pem;
     ssl_certificate_key /etc/letsencrypt/live/lemmy-tfg.duckdns.org/privkey.pem;
 
-    # Ajustes idénticos a los de Lemmy para consistencia
     ssl_protocols TLSv1.2 TLSv1.3;
     ssl_prefer_server_ciphers on;
     ssl_ciphers 'ECDHE-ECDSA-AES256-GCM-SHA384:ECDHE-RSA-AES256-GCM-SHA384:ECDHE-ECDSA-CHACHA20-POLY1305:ECDHE-RSA-CHACHA20-POLY1305:ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES128-GCM-SHA256';
@@ -145,23 +141,19 @@ server {
     add_header X-Frame-Options "DENY";
     add_header X-XSS-Protection "1; mode=block";
 
-    # Proxy hacia OMV (ajusta la IP privada según tu red)
-location / {
-    proxy_pass http://10.208.3.60:80;  # HTTP, no HTTPS
-    proxy_set_header Host $host;
-    proxy_set_header X-Real-IP $remote_addr;
-    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-    proxy_set_header X-Forwarded-Proto $scheme;
+    location / {
+        proxy_pass http://10.208.3.60:80;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
 
-    # proxy_ssl_verify off;  # Ya no necesario, puedes quitar esta línea
-
-    # Rate limiting
-    limit_req zone=lemmy-tfg.duckdns.org_ratelimit burst=30 nodelay;
-
+        limit_req zone=lemmy_ratelimit burst=30 nodelay;
     }
 }
 
 access_log /var/log/nginx/access.log combined;
+
 
 EOF
 
