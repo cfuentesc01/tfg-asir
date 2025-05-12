@@ -45,7 +45,7 @@ sudo systemctl start prometheus.service
 sudo systemctl enable prometheus.service
 
 # Instalación de Grafana (puerto 3000)
-apt install apt-transport-https software-properties-common wget
+sudo apt install -y apt-transport-https software-properties-common wget
 wget -q -O - https://packages.grafana.com/gpg.key | sudo apt-key add -
 
 sudo tee > /etc/apt/sources.list.d/grafana.list > /dev/null << EOF
@@ -79,11 +79,11 @@ ExecStart=/opt/node_exporter/node_exporter
 WantedBy=multi-user.target
 EOF
 
-sudo systemctl daemon-reload
-sudo systemctl daemon-reexec
-sudo systemctl daemon-reload
-sudo systemctl enable node_exporter
-sudo systemctl start node_exporter
+  sudo systemctl daemon-reload
+  sudo systemctl daemon-reexec
+  sudo systemctl daemon-reload
+  sudo systemctl enable node_exporter
+  sudo systemctl start node_exporter
 
 # Añadimos el servidor de Prometheus
 sudo tee /etc/prometheus/prometheus.yml > /dev/null << EOF

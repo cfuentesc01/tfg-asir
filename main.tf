@@ -298,6 +298,21 @@ resource "aws_security_group" "nginx-2_sg" {
     cidr_blocks = ["0.0.0.0/0"]
   }
 
+  # Permitir tráfico Prometheus y Grafana
+  ingress {
+    from_port   = 8443
+    to_port     = 8443
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  ingress {
+    from_port   = 8444
+    to_port     = 8444
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
   # Permitir tráfico SMTP
   ingress {
     from_port   = 587
