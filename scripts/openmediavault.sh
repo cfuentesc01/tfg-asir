@@ -5,6 +5,9 @@ sudo apt update && sudo apt upgrade -y
 sudo apt-get install --yes gnupg
 sudo wget --quiet --output-document=- https://packages.openmediavault.org/public/archive.key | sudo gpg --dearmor --yes --output "/usr/share/keyrings/openmediavault-archive-keyring.gpg"
 
+# Contraseña a admin
+echo 'admin:1234567890asd.' | sudo chpasswd
+
 # Añadiendo repositorios
 sudo tee /etc/apt/sources.list.d/openmediavault.list > /dev/null << EOF
 deb [signed-by=/usr/share/keyrings/openmediavault-archive-keyring.gpg] https://packages.openmediavault.org/public sandworm main
@@ -37,7 +40,6 @@ sudo apt-get install -y --auto-remove --show-upgraded \
 
 # Ejecutar el comando final automáticamente
 sudo omv-confdbadm populate
-
 
 # Monitorización
 sudo useradd --no-create-home --shell /bin/false prometheus
