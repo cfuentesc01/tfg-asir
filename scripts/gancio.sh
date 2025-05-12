@@ -9,6 +9,7 @@ DB_HOST=$(terraform output -raw rds_mysql_gancio_host)
 # Instalar dependencias
 sudo apt update
 sudo apt install -y curl gcc g++ make wget libpq-dev
+sudo apt install -y mailutils
 
 # Instalar Node.js y Yarn package manager
 sudo curl -sL https://deb.nodesource.com/setup_20.x | bash -
