@@ -29,7 +29,7 @@ EOF
 sudo adduser --group --system --shell /bin/false --home /opt/gancio gancio
 
 # Instalar Gancio
-sudo yarn global add --network-timeout 1000000000 --silent https://gancio.org/releases/gancio-v1.6.2.tgz
+sudo yarn global add --network-timeout 1000000000 --silent https://gancio.org/releases/gancio-v1.21.0.tgz
 
 # Instalar systemd service y reload systemd
 sudo wget http://gancio.org/gancio.service -O /etc/systemd/system/gancio.service
@@ -83,14 +83,13 @@ sudo echo "gancio-tfg.duckdns.org" | tee $MAILNAME_FILE
 #}
 #EOF
 
-# Instalar Postfix
-sudo apt update
-sudo apt install -y postfix mailutils procmail
+# Preconfigurar Postfix antes de instalarlo
+echo "postfix postfix/main_mailer_type select No configuration" | sudo debconf-set-selections
+echo "postfix postfix/mailname string localhost" | sudo debconf-set-selections
 
-# Preconfigurar Postfix
-sudo echo "postfix postfix/main_mailer_type select No configuration" | debconf-set-selections
-sudo echo "postfix postfix/mailname string localhost" | debconf-set-selections
-DEBIAN_FRONTEND=noninteractive apt install -y postfix
+# Instalar Postfix sin menús interactivos
+sudo DEBIAN_FRONTEND=noninteractive apt update
+sudo DEBIAN_FRONTEND=noninteractive apt install -y postfix mailutils procmail
 
 # Crear archivo mailname
 sudo echo "gancio-tfg.duckdns.org" | tee /etc/mailname
