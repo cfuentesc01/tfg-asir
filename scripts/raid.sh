@@ -36,3 +36,5 @@ UUID=$(blkid -s UUID -o value $RAID_DEVICE)
 echo "UUID=$UUID $MOUNT_POINT ext4 defaults,nofail,discard 0 0" | sudo tee -a /etc/fstab
 
 echo "[+] RAID 1 montado correctamente en $MOUNT_POINT"
+
+#cat /proc/mdstat
