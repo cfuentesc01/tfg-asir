@@ -68,7 +68,7 @@ sudo tee $LEMMY_FILE > /dev/null << EOF
 database: {
   user: "lemmy"
   password: "1234567890asd."
-  host: "lemmy-rds-postgres.ct54twtvpwmw.us-east-1.rds.amazonaws.com"
+  host: "$DB_HOST"
   port: 5432
   database: "lemmy"
   pool_size: 5
@@ -96,7 +96,7 @@ ExecStart=/opt/lemmy/lemmy-server/lemmy_server
 Environment=LEMMY_CONFIG_LOCATION=/opt/lemmy/lemmy-server/lemmy.hjson
 Environment=PICTRS_ADDR=127.0.0.1:8080
 Environment=RUST_LOG="info"
-Environment=LEMMY_DATABASE_URL=postgres://lemmy:1234567890asd.@lemmy-rds-postgres.ct54twtvpwmw.us-east-1.rds.amazonaws.com:5432/lemmy?sslmode=require
+Environment=LEMMY_DATABASE_URL=postgres://lemmy:1234567890asd.@$DB_HOST:5432/lemmy?sslmode=require
 Restart=on-failure
 WorkingDirectory=/opt/lemmy
 
@@ -179,7 +179,7 @@ sudo tee /home/ubuntu/rds-lemmy-backup.sh > /dev/null << EOF
 # Requisitos: AWS CLI v2, pg_dump, gzip
 
 # Configuración (¡modifícalo!)
-RDS_ENDPOINT="lemmy-rds-postgres.ct54twtvpwmw.us-east-1.rds.amazonaws.com"
+RDS_ENDPOINT="$DB_HOST"
 DB_NAME="lemmy"
 DB_USER="carlosfc"
 BACKUP_DIR="/mnt/lemmy_backup"  # Ruta montada de OpenMediaVault
