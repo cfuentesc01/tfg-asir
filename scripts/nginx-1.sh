@@ -121,7 +121,7 @@ server {
 server {
     listen 8443 ssl http2;
     listen [::]:8443 ssl http2;
-    server_name omv.lemmy-tfg.duckdns.org;
+    server_name lemmy-tfg.duckdns.org;
 
     ssl_certificate /etc/letsencrypt/live/lemmy-tfg.duckdns.org/fullchain.pem;
     ssl_certificate_key /etc/letsencrypt/live/lemmy-tfg.duckdns.org/privkey.pem;

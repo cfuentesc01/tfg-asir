@@ -133,6 +133,7 @@ sudo apt install nodejs -y
 sudo npm i -g pnpm
 cd /opt/lemmy
 sudo -u lemmy bash
+sleep 10
 cd /opt/lemmy
 git clone https://github.com/LemmyNet/lemmy-ui.git --recursive
 cd /opt/lemmy/lemmy-ui
