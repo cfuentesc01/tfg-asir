@@ -6,7 +6,7 @@ EMAIL="carlos@gmail.com"
 DOMAIN="gancio-tfg.duckdns.org"
 # Archivo de configuracion
 CONFIG_FILE="/etc/nginx/sites-enabled/gancio.conf"
-LINK_FILE="/etc/nginx/sites-enabled/gancio.conf"
+#LINK_FILE="/etc/nginx/sites-enabled/gancio.conf"
 
 # Update and install necessary packages
 apt-get update -y
