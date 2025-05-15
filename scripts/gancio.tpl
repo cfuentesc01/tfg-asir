@@ -18,7 +18,7 @@ sudo npm install -g yarn
 
 # Conexión con base de datos
 sudo apt install -y mysql-client
-sudo mysql -h ${DB_HOST} -u carlosfc -p1234567890asd. <<EOF
+sudo mysql -h ${db_host} -u carlosfc -p1234567890asd. <<EOF
 CREATE DATABASE IF NOT EXISTS gancio;
 CREATE USER IF NOT EXISTS 'gancio'@'%' IDENTIFIED BY '1234567890asd.';
 GRANT ALL PRIVILEGES ON gancio.* TO 'gancio'@'%';
