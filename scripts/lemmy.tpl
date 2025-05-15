@@ -18,8 +18,10 @@ sudo apt update
 sudo apt install yarn -y
 sudo apt install -y postgresql-client
 
+export PGPASSWORD="1234567890asd."
+
 # Ejecutar comandos en PostgreSQL
-PGPASSWORD="1234567890asd." psql -h "$DB_HOST" -U carlosfc -d postgres <<EOF
+psql -h "$DB_HOST" -U carlosfc -d postgres <<EOF
 CREATE USER lemmy WITH PASSWORD '1234567890asd.';
 CREATE DATABASE lemmy WITH OWNER lemmy;
 GRANT ALL PRIVILEGES ON DATABASE lemmy TO lemmy;
@@ -68,7 +70,7 @@ sudo tee $LEMMY_FILE > /dev/null << EOF
 database: {
   user: "lemmy"
   password: "1234567890asd."
-  host: "$DB_HOST"
+  host: "$db_host"
   port: 5432
   database: "lemmy"
   pool_size: 5
@@ -96,7 +98,7 @@ ExecStart=/opt/lemmy/lemmy-server/lemmy_server
 Environment=LEMMY_CONFIG_LOCATION=/opt/lemmy/lemmy-server/lemmy.hjson
 Environment=PICTRS_ADDR=127.0.0.1:8080
 Environment=RUST_LOG="info"
-Environment=LEMMY_DATABASE_URL=postgres://lemmy:1234567890asd.@$DB_HOST:5432/lemmy?sslmode=require
+Environment=LEMMY_DATABASE_URL=postgres://lemmy:1234567890asd.@$db_host:5432/lemmy?sslmode=require
 Restart=on-failure
 WorkingDirectory=/opt/lemmy
 
@@ -181,7 +183,7 @@ sudo tee /home/ubuntu/rds-lemmy-backup.sh > /dev/null << EOF
 # Requisitos: AWS CLI v2, pg_dump, gzip
 
 # Configuración (¡modifícalo!)
-RDS_ENDPOINT="$DB_HOST"
+RDS_ENDPOINT="$db_host"
 DB_NAME="lemmy"
 DB_USER="carlosfc"
 BACKUP_DIR="/mnt/lemmy_backup"  # Ruta montada de OpenMediaVault
