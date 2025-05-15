@@ -58,7 +58,7 @@ sudo echo "gancio-tfg.duckdns.org" | tee $MAILNAME_FILE
 #  "db": {
 #    "dialect": "mariadb",
 #    "storage": "",
-#    "host": "${DB_HOST}",
+#    "host": "${db_host}",
 #    "database": "gancio",
 #    "username": "gancio",
 #    "password": "1234567890asd.",
