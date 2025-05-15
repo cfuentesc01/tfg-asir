@@ -249,6 +249,7 @@ EOF
 sudo sed -i -e 's/{{domain}}/lemmy-tfg.duckdns.org/g' /etc/nginx/sites-enabled/lemmy.conf
 sudo systemctl reload nginx
 sudo systemctl daemon-reload
+sudo systemctl reload nginx
 
 # Monitorización
 sudo useradd --no-create-home --shell /bin/false prometheus
