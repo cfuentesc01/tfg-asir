@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Variable RDS
-DB_HOST=$(terraform output -raw rds_postgres_lemmy_host)
+DB_HOST="${db_host}"
 
 # Instalando dependencias
 sudo apt update

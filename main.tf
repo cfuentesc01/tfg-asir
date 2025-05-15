@@ -697,7 +697,10 @@ resource "aws_instance" "lemmy" {
   key_name      = aws_key_pair.ssh_key.key_name
   security_groups = [aws_security_group.lemmy_sg.id]
 
-  user_data = file("scripts/lemmy.sh") 
+  user_data = templatefile("${path.module}/scripts/lemmy.sh", {
+    db_host = aws_db_instance.rds_postgres_lemmy.address
+  })
+
 
   tags = {
     Name = "LEMMY-1"
@@ -754,7 +757,9 @@ resource "aws_instance" "gancio" {
   key_name      = aws_key_pair.ssh_key.key_name
   security_groups = [aws_security_group.gancio_sg.id]
 
-  user_data = file("scripts/gancio.sh") 
+  user_data = templatefile("${path.module}/scripts/gancio.sh", {
+    db_host = aws_db_instance.rds_mysql_gancio.address
+  })
 
   tags = {
     Name = "GANCIO-1"
