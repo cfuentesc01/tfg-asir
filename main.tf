@@ -750,7 +750,7 @@ resource "aws_instance" "backups" {
 // Creación de la instancia de Gancio
 
 resource "aws_instance" "gancio" {
-  ami           = "ami-04b4f1a9cf54c11d0"
+  ami           = "ami-0779caf41f9ba54f0"
   instance_type = "t2.micro"
   private_ip    = "10.208.4.70"
   subnet_id     = aws_subnet.private2.id
