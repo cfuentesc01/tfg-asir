@@ -83,7 +83,8 @@ tls_enabled: false
 jwt_secret: "aROu1xO5+7Ew48vCxLGB3ZqGVt3yHa+DHXIIAIL9iNI="
 EOF
 
-sudo chown -R lemmy:lemmy /opt/lemmy/
+sudo chown -R lemmy:lemmy /opt/lemmy
+sudo chmod 755 /opt/lemmy
 
 SERVICE_FILE="/etc/systemd/system/lemmy.service"
 
@@ -131,19 +132,24 @@ echo "deb [signed-by=/etc/apt/keyrings/nodesource.gpg] https://deb.nodesource.co
 sudo apt update
 sudo apt install nodejs -y
 
-# pnpm
+# Instalar pnpm
 sudo npm i -g pnpm
-cd /opt/lemmy
-sudo -u lemmy bash
-sleep 10
-cd /opt/lemmy
-git clone https://github.com/LemmyNet/lemmy-ui.git --recursive
-cd /opt/lemmy/lemmy-ui
-git checkout 0.18.5
-yarn add webpack webpack-cli --dev
-yarn install
-yarn build:prod
-exit
+
+# Crear el directorio si no existe y dar permisos a lemmy
+sudo mkdir -p /opt/lemmy
+sudo chown -R lemmy:lemmy /opt/lemmy
+sudo chmod 755 /opt/lemmy
+
+# Ejecutar como lemmy todos los comandos necesarios
+sudo -u lemmy -H bash -c '
+  cd /opt/lemmy
+  git clone https://github.com/LemmyNet/lemmy-ui.git --recursive
+  cd lemmy-ui
+  git checkout 0.18.5
+  yarn add webpack webpack-cli --dev
+  yarn install
+  yarn build:prod
+'
 
 SERVICE_FILE_2="/etc/systemd/system/lemmy-ui.service"
 
