@@ -2,9 +2,9 @@
 set -e
 
 # Variables
-RAID_DEVICE="/dev/md0"
-DISK1="/dev/xvdf"
-DISK2="/dev/xvdg"
+RAID_DEVICE="/dev/nvme0n1"
+DISK1="/dev/nvme1n1"
+DISK2="/dev/nvme2n1"
 MOUNT_POINT="/mnt/raid1"
 
 echo "[+] Instalando mdadm..."
