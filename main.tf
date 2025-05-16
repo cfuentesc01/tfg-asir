@@ -757,10 +757,10 @@ resource "aws_instance" "gancio" {
   key_name      = aws_key_pair.ssh_key.key_name
   security_groups = [aws_security_group.gancio_sg.id]
 
-  user_data = templatefile("${path.module}/scripts/gancio-2.tpl", {
-    db_host        = aws_db_instance.rds_mysql_gancio.address
-    data_directory = "/var/lib/postfix"
-  })
+#  user_data = templatefile("${path.module}/scripts/gancio-2.tpl", {
+#    db_host        = aws_db_instance.rds_mysql_gancio.address
+#    data_directory = "/var/lib/postfix"
+#  })
 
   tags = {
     Name = "GANCIO-1"
