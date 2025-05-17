@@ -1,5 +1,9 @@
 #!/bin/bash
 
+POSTFIX1_FILE="/etc/postfix/main.cf"
+POSTFIX2_FILE="/etc/postfix/sasl_passwd"
+MAILNAME_FILE="/etc/mailname"
+
 # Instalar dependencias
 sudo apt update
 sudo apt install -y curl gcc g++ make wget libpq-dev
@@ -10,7 +14,7 @@ sudo curl -fsSL https://deb.nodesource.com/gpgkey/nodesource-repo.gpg.key | sudo
 
 NODE_MAJOR=20
 echo "deb [signed-by=/etc/apt/keyrings/nodesource.gpg] https://deb.nodesource.com/node_$NODE_MAJOR.x nodistro main" | sudo tee /etc/apt/sources.list.d/nodesource.list
-sudo apt install nodejs
+sudo apt install nodejs -y
 
 # Instalar Yarn
 curl -sL https://dl.yarnpkg.com/debian/pubkey.gpg | sudo tee /etc/apt/trusted.gpg.d/yarn.asc
@@ -35,9 +39,6 @@ sudo wget http://gancio.org/gancio.service -O /etc/systemd/system/gancio.service
 sudo systemctl daemon-reload
 sudo systemctl enable gancio
 sudo systemctl start gancio
-
-# Servidor de correo
-sudo echo "gancio-tfg.duckdns.org" | tee $MAILNAME_FILE
 
 # Preconfigurar Postfix antes de instalarlo
 echo "postfix postfix/main_mailer_type select No configuration" | sudo debconf-set-selections
