@@ -714,7 +714,7 @@ resource "aws_instance" "backups" {
   key_name      = aws_key_pair.ssh_key.key_name
   security_groups = [aws_security_group.backups_sg.id]
 
-  user_data = file("scripts/openmediavault.sh")
+  user_data = file("scripts/openmediavault-2.sh")
 
   tags = {
     Name = "BACKUPS"
