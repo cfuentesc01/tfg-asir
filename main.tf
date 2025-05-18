@@ -633,7 +633,7 @@ resource "aws_security_group" "backups_sg" {
   }
 
   tags = {
-    Name = "SG-OMV"
+    Name = "SG-CASAOS"
   }
 }
 
