@@ -553,11 +553,11 @@ resource "aws_security_group" "prometheus_sg" {
   }
 }
 
-// Creación del grupo de seguridad de Backups con OpenMediaVault
+// Creación del grupo de seguridad de Backups con CasaOS
 
 resource "aws_security_group" "backups_sg" {
   name        = "backups_sg"
-  description = "Permitir acceso a OpenMediaVault y conexiones a RDS"
+  description = "Permitir acceso a CasaOS y conexiones a RDS"
   vpc_id      = aws_vpc.tfg_asir_vpc.id
 
   # Permitir SSH desde cualquier instancia dentro de la VPC
@@ -568,7 +568,7 @@ resource "aws_security_group" "backups_sg" {
     cidr_blocks = ["0.0.0.0/0"]
   }
 
-  # Permitir acceso HTTPS a la interfaz web de OpenMediaVault
+  # Permitir acceso HTTPS a la interfaz web de CasaOS
   ingress {
     from_port   = 443
     to_port     = 443
@@ -576,7 +576,7 @@ resource "aws_security_group" "backups_sg" {
     cidr_blocks = ["0.0.0.0/0"]
   }
 
-  # Permitir acceso HTTPS a la interfaz web de OpenMediaVault
+  # Permitir acceso HTTPS a la interfaz web de CasaOS
   ingress {
     from_port   = 8443
     to_port     = 8443
