@@ -282,7 +282,7 @@ resource "aws_security_group" "nginx-2_sg" {
     cidr_blocks = ["0.0.0.0/0"]
   }
 
-  # Permitir tráfico Prometheus
+  # Permitir tráfico Prometheus con Node Exporter
   ingress {
     from_port   = 9100
     to_port     = 9100
@@ -348,13 +348,12 @@ resource "aws_security_group" "lemmy_sg" {
   description = "Reglas de seguridad para la instancia de Lemmy"
   vpc_id      = aws_vpc.tfg_asir_vpc.id  
 
-  # Permitir SSH solo desde una IP específica o bastión
+  # Permitir SSH 
   ingress {
     from_port   = 22
     to_port     = 22
     protocol    = "tcp"
     cidr_blocks = ["0.0.0.0/0"]
-
   }
 
   # Permitir acceso a Lemmy 
@@ -373,12 +372,12 @@ resource "aws_security_group" "lemmy_sg" {
     cidr_blocks = ["0.0.0.0/0"]
   }
 
-  # Permitir acceso a PostgreSQL solo dentro de la subred privada
+  # Permitir acceso a PostgreSQL 
   ingress {
     from_port   = 5432
     to_port     = 5432
     protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]  # Ajusta a la subred privada correcta
+    cidr_blocks = ["0.0.0.0/0"]  
   }
 
   # Permitir SMB para backups
@@ -406,7 +405,7 @@ resource "aws_security_group" "lemmy_sg" {
   }
 
   tags = {
-    Name = "Lemmy Security Group"
+    Name = "SG-LEMMY"
   }
 }
 
@@ -417,7 +416,7 @@ resource "aws_security_group" "gancio_sg" {
   description = "Reglas de seguridad para la instancia de Gancio con Postfix y RDS"
   vpc_id      = aws_vpc.tfg_asir_vpc.id  # Asegura que esté en la VPC correcta
 
-  # Permitir acceso SSH desde cualquier instancia dentro de la VPC
+  # Permitir acceso SSH
   ingress {
     from_port   = 22
     to_port     = 22
@@ -449,19 +448,19 @@ resource "aws_security_group" "gancio_sg" {
     cidr_blocks = ["0.0.0.0/0"]
   }
 
-  # Permitir SMTPS (SMTP seguro) y Submission (STARTTLS)
+  # Permitir SMTP y SMTPS
   ingress {
     from_port   = 465
     to_port     = 465
     protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]  # Global para SMTPS
+    cidr_blocks = ["0.0.0.0/0"]
   }
 
   ingress {
     from_port   = 587
     to_port     = 587
     protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]  # Global para Submission (STARTTLS)
+    cidr_blocks = ["0.0.0.0/0"]  
   }
 
   # Permitir acceso a MySQL RDS desde Gancio
@@ -469,7 +468,7 @@ resource "aws_security_group" "gancio_sg" {
     from_port   = 3306
     to_port     = 3306
     protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]  # Acceso desde cualquier instancia en la VPC
+    cidr_blocks = ["0.0.0.0/0"] 
   }
 
   # Permitir SMB para backups
@@ -497,7 +496,7 @@ resource "aws_security_group" "gancio_sg" {
   }
 
   tags = {
-    Name = "Gancio Security Group"
+    Name = "SG-GANCIO"
   }
 }
 
@@ -514,15 +513,15 @@ resource "aws_security_group" "prometheus_sg" {
     from_port   = 22
     to_port     = 22
     protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]  # Toda la VPC puede acceder por SSH
+    cidr_blocks = ["0.0.0.0/0"]  
   }
 
-  # Permitir acceso a la interfaz web de Prometheus (9090) desde cualquier instancia de la VPC
+  # Permitir acceso web a Prometheus
   ingress {
     from_port   = 9090
     to_port     = 9090
     protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]  # Toda la VPC puede acceder a Prometheus
+    cidr_blocks = ["0.0.0.0/0"] 
   }
 
   # Permitir tráfico Prometheus
@@ -533,15 +532,15 @@ resource "aws_security_group" "prometheus_sg" {
     cidr_blocks = ["0.0.0.0/0"]
   }
 
-  # Permitir acceso a la interfaz web de Grafana (3000) desde cualquier instancia de la VPC
+  # Permitir acceso a la web de Grafana 
   ingress {
     from_port   = 3000
     to_port     = 3000
     protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]  # Toda la VPC puede acceder a Grafana
+    cidr_blocks = ["0.0.0.0/0"]
   }
 
-  # Permitir salida a Internet (para actualizaciones, etc.)
+  # Permitir salida a Internet 
   egress {
     from_port   = 0
     to_port     = 0
@@ -567,7 +566,6 @@ resource "aws_security_group" "backups_sg" {
     to_port     = 22
     protocol    = "tcp"
     cidr_blocks = ["0.0.0.0/0"]
-    description = "SSH desde la VPC"
   }
 
   # Permitir acceso HTTPS a la interfaz web de OpenMediaVault
@@ -576,16 +574,14 @@ resource "aws_security_group" "backups_sg" {
     to_port     = 443
     protocol    = "tcp"
     cidr_blocks = ["0.0.0.0/0"]
-    description = "Interfaz Web OpenMediaVault desde la VPC"
   }
 
-    # Permitir acceso HTTPS a la interfaz web de OpenMediaVault
+  # Permitir acceso HTTPS a la interfaz web de OpenMediaVault
   ingress {
     from_port   = 8443
     to_port     = 8443
     protocol    = "tcp"
     cidr_blocks = ["0.0.0.0/0"]
-    description = "Interfaz Web OpenMediaVault desde la VPC"
   }
 
   # Permitir conexión a MySQL RDS
@@ -594,7 +590,6 @@ resource "aws_security_group" "backups_sg" {
     to_port     = 3306
     protocol    = "tcp"
     cidr_blocks = ["0.0.0.0/0"]
-    description = "Acceso a MySQL RDS desde Backups"
   }
 
   # Permitir tráfico Prometheus
@@ -619,7 +614,6 @@ resource "aws_security_group" "backups_sg" {
     to_port     = 5432
     protocol    = "tcp"
     cidr_blocks = ["0.0.0.0/0"]
-    description = "Acceso a PostgreSQL RDS desde Backups"
   }
 
   # Permitir conexión HTTP
@@ -628,20 +622,18 @@ resource "aws_security_group" "backups_sg" {
     to_port     = 80
     protocol    = "tcp"
     cidr_blocks = ["0.0.0.0/0"]
-    description = "Acceso HTTP"
   }
 
-  # Reglas de salida: permitir tráfico saliente a cualquier destino
+  # Permitir tráfico saliente a cualquier destino
   egress {
     from_port   = 0
     to_port     = 0
     protocol    = "-1"
     cidr_blocks = ["0.0.0.0/0"]
-    description = "Allow all outbound traffic"
   }
 
   tags = {
-    Name = "Backups SG"
+    Name = "SG-OMV"
   }
 }
 
@@ -722,8 +714,7 @@ resource "aws_instance" "backups" {
   key_name      = aws_key_pair.ssh_key.key_name
   security_groups = [aws_security_group.backups_sg.id]
 
-  #user_data = file("scripts/openmediavault.sh")
-  user_data = file("scripts/raid.sh")
+  user_data = file("scripts/openmediavault.sh")
 
   tags = {
     Name = "BACKUPS"
@@ -757,10 +748,10 @@ resource "aws_instance" "gancio" {
   key_name      = aws_key_pair.ssh_key.key_name
   security_groups = [aws_security_group.gancio_sg.id]
 
-#  user_data = templatefile("${path.module}/scripts/gancio-2.tpl", {
-#    db_host        = aws_db_instance.rds_mysql_gancio.address
-#    data_directory = "/var/lib/postfix"
-#  })
+  user_data = templatefile("${path.module}/scripts/gancio-2.tpl", {
+    db_host        = aws_db_instance.rds_mysql_gancio.address
+    data_directory = "/var/lib/postfix"
+  })
 
   tags = {
     Name = "GANCIO-1"
