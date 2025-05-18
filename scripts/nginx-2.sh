@@ -1,12 +1,7 @@
 #!/bin/bash
 
-# Dirección de correo para Certbot
-EMAIL="carlos@gmail.com"
-# Dominio para el certificado
-DOMAIN="gancio-tfg.duckdns.org"
 # Archivo de configuracion
 CONFIG_FILE="/etc/nginx/sites-enabled/gancio.conf"
-#LINK_FILE="/etc/nginx/sites-enabled/gancio.conf"
 
 # Update and install necessary packages
 apt-get update -y
@@ -45,50 +40,125 @@ apt-get install nginx -y
 apt install nginx-extras -y
 
 sudo tee > $CONFIG_FILE > /dev/null << EOF
+# Redirección global HTTP -> HTTPS
 server {
-  listen 80;
-  listen [::]:80;
-  server_name gancio-tfg.duckdns.org;
-
-  # Redirección automática de HTTP a HTTPS
-  return 301 https://$host$request_uri;
+    listen 80;
+    listen [::]:80;
+    server_name gancio-tfg.duckdns.org;
+    return 301 https://$host$request_uri;
 }
 
+# Gancio - Servicio principal (Puerto 443)
 server {
-  listen 443 ssl http2;
-  listen [::]:443 ssl http2;
-  server_name gancio-tfg.duckdns.org;
+    listen 443 ssl http2;
+    listen [::]:443 ssl http2;
+    server_name gancio-tfg.duckdns.org;
 
-  ssl_certificate /etc/letsencrypt/live/gancio-tfg.duckdns.org/fullchain.pem;
-  ssl_certificate_key /etc/letsencrypt/live/gancio-tfg.duckdns.org/privkey.pem;
-  ssl_trusted_certificate /etc/letsencrypt/live/gancio-tfg.duckdns.org/chain.pem;
+    ssl_certificate /etc/letsencrypt/live/gancio-tfg.duckdns.org/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/gancio-tfg.duckdns.org/privkey.pem;
+    ssl_trusted_certificate /etc/letsencrypt/live/gancio-tfg.duckdns.org/chain.pem;
+    ssl_protocols TLSv1.3;
+    ssl_ciphers ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES128-GCM-SHA256;
+    ssl_session_cache shared:SSL:10m;
+    ssl_session_timeout 10m;
 
-  ssl_protocols TLSv1.2 TLSv1.3;
-  ssl_prefer_server_ciphers on;
+    add_header Strict-Transport-Security "max-age=31536000; includeSubDomains" always;
+    add_header X-Content-Type-Options nosniff;
+    add_header X-Frame-Options DENY;
 
-  keepalive_timeout    70;
-  sendfile             on;
-  client_max_body_size 80m;
+    client_max_body_size 80m;
+    keepalive_timeout 70;
+    sendfile on;
 
-  location / {
-    try_files $uri @proxy;
-  }
+    location / {
+        proxy_pass http://10.208.4.70:13120;
+        proxy_http_version 1.1;
+        proxy_redirect off;
 
-  location @proxy {
-    proxy_pass http://10.208.4.70:13120;
-    proxy_redirect / /;
-    proxy_set_header Host $host;
-    proxy_set_header X-Real-IP $remote_addr;
-    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-    proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection "Upgrade";
 
-    # Soporte para WebSockets
-    proxy_set_header Upgrade $http_upgrade;
-    proxy_set_header Connection "Upgrade";
-  }
+        proxy_cache_bypass $http_upgrade;
+        proxy_buffering off;
+    }
 
-  error_log /var/log/nginx/gancio_error.log;
-  access_log /var/log/nginx/gancio_access.log;
+    error_log /var/log/nginx/gancio_error.log;
+    access_log /var/log/nginx/gancio_access.log;
+}
+
+# Prometheus - Monitorización (Puerto 8443)
+server {
+    listen 8443 ssl http2;
+    listen [::]:8443 ssl http2;
+    server_name gancio-tfg.duckdns.org;
+
+    ssl_certificate /etc/letsencrypt/live/gancio-tfg.duckdns.org/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/gancio-tfg.duckdns.org/privkey.pem;
+    ssl_protocols TLSv1.3;
+    ssl_ciphers ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES128-GCM-SHA256;
+    ssl_session_cache shared:SSL:10m;
+    ssl_session_timeout 10m;
+
+    location / {
+        proxy_pass http://10.208.4.80:9090;
+        proxy_http_version 1.1;
+        proxy_redirect off;
+
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_set_header X-Forwarded-Host $host;
+
+        proxy_cache_bypass $http_upgrade;
+        proxy_buffering off;
+    }
+
+    error_log /var/log/nginx/prometheus_error.log;
+    access_log /var/log/nginx/prometheus_access.log;
+}
+
+# Grafana - Dashboard de métricas (Puerto 8444)
+server {
+    listen 8444 ssl http2;
+    listen [::]:8444 ssl http2;
+    server_name gancio-tfg.duckdns.org;
+
+    ssl_certificate /etc/letsencrypt/live/gancio-tfg.duckdns.org/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/gancio-tfg.duckdns.org/privkey.pem;
+    ssl_protocols TLSv1.3;
+    ssl_ciphers ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES128-GCM-SHA256;
+    ssl_session_cache shared:SSL:10m;
+    ssl_session_timeout 10m;
+
+    location / {
+        proxy_pass http://10.208.4.80:3000;
+        proxy_http_version 1.1;
+        proxy_redirect off;
+
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_set_header X-Forwarded-Host $host;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection "Upgrade";
+
+        proxy_cache_bypass $http_upgrade;
+        proxy_buffering off;
+
+        proxy_connect_timeout 90;
+        proxy_send_timeout 90;
+        proxy_read_timeout 90;
+        send_timeout 90;
+    }
+
+    error_log /var/log/nginx/grafana_error.log;
+    access_log /var/log/nginx/grafana_access.log;
 }
 EOF
 
