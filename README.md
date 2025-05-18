@@ -25,7 +25,7 @@ Ambos servicios se desplegarán en un entorno seguro y escalable, con la integra
 - **Nginx** (proxy inverso y gestión de SSL)
 - **MySQL y PostgreSQL en AWS RDS** (almacenamiento de datos)
 - **Terraform** (automatización)
-- **OpenMediaVault** (backups)
+- **CasaOS** (backups)
 - **Prometheus con Grafana** (monitorización y visualización de recursos)
 - **Postfix SMTP** (notificaciones de eventos por email)
 - **Firewall y reglas IAM estrictas** (seguridad)

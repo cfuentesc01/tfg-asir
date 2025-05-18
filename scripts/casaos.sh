@@ -41,19 +41,12 @@ echo "[+] RAID 1 montado correctamente en $MOUNT_POINT"
 
 #cat /proc/mdstat
 
-# Instalando OpenMediaVault
-sudo wget -O - https://github.com/OpenMediaVault-Plugin-Developers/installScript/raw/master/install | sudo bash
+# Actualizar sistema
+sudo apt update && sudo apt upgrade -y
 
-# Reiniciando servicios
-sudo systemctl restart openmediavault-engined
-sudo systemctl restart php8.2-fpm
-sudo systemctl restart nginx
+# Instalar CasaOS
+curl -fsSL https://get.casaos.io | sudo bash
 
-# Recargar configuracion del servidor
-sudo omv-salt stage run prepare
-sudo omv-salt stage run deploy
-
-# Monitorización
 # Monitorización
 sudo useradd --no-create-home --shell /bin/false prometheus
 sudo chown -R prometheus:prometheus /opt/node_exporter

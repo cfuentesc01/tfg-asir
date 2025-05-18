@@ -6,17 +6,59 @@ POSTFIX2_FILE="/etc/postfix/sasl_passwd"
 MAILNAME_FILE="/etc/mailname"
 DB_HOST=${db_host}
 
+set -e
+
+# Actualizar sistema
+apt update && apt upgrade -y
+
+# Instalar dependencias necesarias
+apt install -y curl git build-essential sqlite3
+
+# Instalar Node.js (v20 LTS)
+curl -fsSL https://deb.nodesource.com/setup_20.x | bash -
+apt install -y nodejs
+
+# Instalar Yarn
+npm install -g yarn
+
+# Crear usuario para gancio
+useradd -m -s /bin/bash gancio || true
+
+# Clonar repositorio oficial de Gancio
+sudo -u gancio git clone https://github.com/lesion/gancio.git /home/gancio/gancio
+
 # Instalar dependencias
-sudo apt update
-sudo apt install -y curl gcc g++ make wget libpq-dev
-sudo apt install -y mailutils
+cd /home/gancio/gancio
+sudo -u gancio yarn install
 
-# Instalar Node.js y Yarn package manager
-sudo curl -sL https://deb.nodesource.com/setup_20.x | bash -
-sudo apt-get install -y nodejs
-sudo npm install -g yarn
+# Configurar entorno
+cd /home/gancio/gancio
+sudo -u gancio yarn build
 
-# Conexión con base de datos
+# Crear servicio gancio
+cat <<EOF > /etc/systemd/system/gancio.service
+[Unit]
+Description=Gancio
+After=network.target
+
+[Service]
+User=gancio
+WorkingDirectory=/home/gancio/gancio
+ExecStart=/usr/bin/yarn start
+Restart=always
+Environment=NODE_ENV=production
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+# Habilitar y arrancar el servicio
+systemctl daemon-reexec
+systemctl daemon-reload
+systemctl enable gancio
+systemctl start gancio
+
+# Instalar cliente de base de datos
 sudo apt install -y mariadb-client
 sudo mysql -h ${db_host} -u carlosfc -p1234567890asd. <<EOF
 CREATE DATABASE IF NOT EXISTS gancio;
@@ -24,64 +66,6 @@ CREATE USER IF NOT EXISTS 'gancio'@'%' IDENTIFIED BY '1234567890asd.';
 GRANT ALL PRIVILEGES ON gancio.* TO 'gancio'@'%';
 FLUSH PRIVILEGES;
 EOF
-
-# Crear usuario para ejecutar Gancio
-sudo adduser --group --system --shell /bin/false --home /opt/gancio gancio
-
-# Instalar Gancio
-sudo yarn global add --network-timeout 1000000000 --silent https://gancio.org/releases/gancio-v1.21.0.tgz
-
-# Instalar systemd service y reload systemd
-sudo wget http://gancio.org/gancio.service -O /etc/systemd/system/gancio.service
-sudo systemctl daemon-reload
-sudo systemctl enable gancio
-
-# Arrancar el servicio de gancio
-sudo systemctl daemon-reload
-sudo systemctl start gancio
-sudo systemctl daemon-reload
-
-# Crear archivo mailname
-sudo echo "gancio-tfg.duckdns.org" | tee $MAILNAME_FILE
-
-# Configuración de Gancio con endpoint inyectado
-#sudo tee $GANCIO_FILE > /dev/null << EOF
-#{
-#  "baseurl": "https://gancio-tfg.duckdns.org",
-#  "hostname": "gancio-tfg.duckdns.org",
-#  "server": {
-#    "host": "0.0.0.0",
-#    "port": 13120
-#  },
-#  "log_level": "debug",
-#  "log_path": "/opt/gancio/logs",
-#  "db": {
-#    "dialect": "mariadb",
-#    "storage": "",
-#    "host": "${db_host}",
-#    "database": "gancio",
-#    "username": "gancio",
-#    "password": "1234567890asd.",
-#    "logging": false,
-#    "dialectOptions": {
-#     "autoJsonMap": true
-#    }
-#  },
-#  "user_locale": "/opt/gancio/user_locale",
-#  "upload_path": "/opt/gancio/uploads",
-#  "proxy": {
-#    "protocol": "",
-#    "hostname": "",
-#    "host": "",
-#    "port": "",
-#    "auth": {
-#      "username": "",
-#      "password": ""
-#    },
-#    "headers": {}
-#  }
-#}
-#EOF
 
 # Preconfigurar Postfix antes de instalarlo
 echo "postfix postfix/main_mailer_type select No configuration" | sudo debconf-set-selections
