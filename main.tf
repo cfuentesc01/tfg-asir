@@ -704,7 +704,7 @@ resource "aws_instance" "lemmy" {
   }
 }
 
-// Creación de la instancia de Backups con OpenMediaVault
+// Creación de la instancia de Backups con CasaOS
 
 resource "aws_instance" "backups" {
   ami           = "ami-0779caf41f9ba54f0"
@@ -714,7 +714,7 @@ resource "aws_instance" "backups" {
   key_name      = aws_key_pair.ssh_key.key_name
   security_groups = [aws_security_group.backups_sg.id]
 
-  user_data = file("scripts/openmediavault-2.sh")
+  user_data = file("scripts/casaos.sh")
 
   tags = {
     Name = "BACKUPS"
@@ -748,7 +748,7 @@ resource "aws_instance" "gancio" {
   key_name      = aws_key_pair.ssh_key.key_name
   security_groups = [aws_security_group.gancio_sg.id]
 
-#  user_data = templatefile("${path.module}/scripts/gancio-2.tpl", {
+#  user_data = templatefile("${path.module}/scripts/gancio.tpl", {
 #    db_host        = aws_db_instance.rds_mysql_gancio.address
 #    data_directory = "/var/lib/postfix"
 #  })
