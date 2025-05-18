@@ -742,7 +742,7 @@ resource "aws_instance" "backups" {
 
 resource "aws_instance" "gancio" {
   ami           = "ami-0779caf41f9ba54f0"
-  instance_type = "t3.medium"
+  instance_type = "t2.medium"
   private_ip    = "10.208.4.70"
   subnet_id     = aws_subnet.private2.id
   key_name      = aws_key_pair.ssh_key.key_name
