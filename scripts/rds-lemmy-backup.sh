@@ -7,7 +7,7 @@
 RDS_ENDPOINT="lemmy.ct54twtvpwmw.us-east-1.rds.amazonaws.com"
 DB_NAME="lemmy"
 DB_USER="carlosfc"
-BACKUP_DIR="/mnt/lemmy_backup"  # Ruta montada de OpenMediaVault
+BACKUP_DIR="/mnt/raid1/lemmy_backup"  # Ruta montada de OpenMediaVault
 RETENTION_DAYS=30
 
 # Obtener contraseña de AWS Secrets Manager (opcional)

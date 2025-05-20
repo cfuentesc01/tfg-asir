@@ -26,6 +26,7 @@ useradd -m -s /bin/bash gancio || true
 
 # Clonar repositorio oficial de Gancio
 sudo -u gancio git clone https://github.com/lesion/gancio.git /home/gancio/gancio
+#sudo -u gancio git clone https://framagit.org/les/gancio.git /home/gancio/gancio
 
 # Instalar dependencias
 cd /home/gancio/gancio

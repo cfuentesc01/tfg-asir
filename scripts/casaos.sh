@@ -41,13 +41,12 @@ sudo systemctl start node_exporter
 sudo tee /home/admin/raid.sh > /dev/null << EOF
 #!/bin/bash
 
-# Creación del raid
 set -e
 
 # Variables
-RAID_DEVICE="/dev/md0"
 DISK1="/dev/nvme1n1"
 DISK2="/dev/nvme2n1"
+RAID_DEVICE="/dev/md0"
 MOUNT_POINT="/mnt/raid1"
 
 echo "[+] Instalando mdadm..."
