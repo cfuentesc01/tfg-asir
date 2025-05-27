@@ -15,7 +15,7 @@ apt update && apt upgrade -y
 apt install -y curl git build-essential sqlite3
 
 # Instalar Node.js (v20 LTS)
-curl -fsSL https://deb.nodesource.com/setup_20.x | bash -
+curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
 apt install -y nodejs
 
 # Instalar Yarn
@@ -35,6 +35,7 @@ sudo -u gancio yarn install
 # Configurar entorno
 cd /home/gancio/gancio
 sudo -u gancio yarn build
+cd /home/admin
 
 # Crear servicio gancio
 cat <<EOF > /etc/systemd/system/gancio.service
