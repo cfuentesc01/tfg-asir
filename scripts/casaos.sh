@@ -4,6 +4,7 @@
 sudo apt update && sudo apt upgrade -y
 sudo apt install -y cron
 sudo apt install mariadb-client
+sudo apt install postgresql-client
 
 # Habilitar cron
 sudo systemctl enable cron
