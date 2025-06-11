@@ -9,7 +9,7 @@ sudo systemctl enable cron
 sudo systemctl start cron
 
 # Instalar CasaOS
-curl -fsSL https://get.casaos.io | sudo bash
+sudo curl -fsSL https://get.casaos.io | sudo bash
 
 # Monitorización
 sudo useradd --no-create-home --shell /bin/false prometheus
