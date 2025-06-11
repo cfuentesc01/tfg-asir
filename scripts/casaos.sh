@@ -3,6 +3,7 @@
 # Actualizar sistema
 sudo apt update && sudo apt upgrade -y
 sudo apt install -y cron
+sudo apt install mariadb-client
 
 # Habilitar cron
 sudo systemctl enable cron
